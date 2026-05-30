@@ -11,7 +11,7 @@ class Contractor extends Model
     use HasFactory;
 
     protected $fillable = [
-        'type', 'name', 'phone', 'email', 'address', 'vat_number', 'ppsn', 'notes',
+        'type', 'name', 'phone', 'email', 'address', 'eir_code', 'vat_number', 'ppsn', 'notes',
     ];
 
     public function purchases(): HasMany

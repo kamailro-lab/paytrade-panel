@@ -1,6 +1,10 @@
 <?php
 
+use App\Http\Controllers\ContractorController;
+use App\Http\Controllers\CostController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\PurchaseController;
+use App\Http\Controllers\SaleController;
 use App\Http\Controllers\VehicleController;
 use App\Http\Controllers\VehicleLookupController;
 use App\Models\Sale;
@@ -28,6 +32,14 @@ Route::middleware(['auth'])->group(function () {
     })->name('dashboard');
 
     Route::resource('vehicles', VehicleController::class);
+    Route::resource('contractors', ContractorController::class);
+
+    Route::post('vehicles/{vehicle}/purchase', [PurchaseController::class, 'store'])->name('purchases.store');
+    Route::delete('vehicles/{vehicle}/purchase', [PurchaseController::class, 'destroy'])->name('purchases.destroy');
+    Route::post('vehicles/{vehicle}/sale', [SaleController::class, 'store'])->name('sales.store');
+    Route::delete('vehicles/{vehicle}/sale', [SaleController::class, 'destroy'])->name('sales.destroy');
+    Route::post('vehicles/{vehicle}/costs', [CostController::class, 'store'])->name('costs.store');
+    Route::delete('vehicles/{vehicle}/costs/{cost}', [CostController::class, 'destroy'])->name('costs.destroy');
 
     Route::prefix('vehicles/lookup')->name('vehicles.lookup.')->group(function () {
         Route::get('status', [VehicleLookupController::class, 'status'])->name('status');

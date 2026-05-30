@@ -15,10 +15,10 @@
         <p class="mt-1 text-xs text-gray-500">Możesz wpisać bez myślników (np. <code>131D1108</code>) — system sam doda.</p>
     </div>
 
-    <div class="sm:col-span-2 bg-indigo-50 border-2 border-dashed border-indigo-200 rounded-lg p-4">
+    <div id="ai-section" class="sm:col-span-2 bg-indigo-50 border-2 border-dashed border-indigo-200 rounded-lg p-4 hidden">
         <div class="flex items-center justify-between mb-3">
             <h3 class="font-semibold text-indigo-900">🤖 AI wypełnij za mnie</h3>
-            <span id="ai-status" class="text-xs text-gray-500"></span>
+            <span id="ai-status" class="text-xs text-green-600">✅ AI gotowe</span>
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
@@ -186,10 +186,11 @@
     fetch('{{ route('vehicles.lookup.status') }}', {headers: {Accept: 'application/json'}})
         .then(r => r.json())
         .then(d => {
-            aiStatus.textContent = d.ai_configured ? '✅ AI gotowe' : '⚠️ Brak klucza Claude — ustaw ANTHROPIC_API_KEY w .env';
-            aiStatus.className = 'text-xs ' + (d.ai_configured ? 'text-green-600' : 'text-amber-700');
+            if (d.ai_configured) {
+                document.getElementById('ai-section').classList.remove('hidden');
+            }
         })
-        .catch(() => { aiStatus.textContent = ''; });
+        .catch(() => {});
 
     $('#ai-tab-desc').addEventListener('click', () => { tabs.desc.classList.toggle('hidden'); tabs.photo.classList.add('hidden'); });
     $('#ai-tab-photo').addEventListener('click', () => { tabs.photo.classList.toggle('hidden'); tabs.desc.classList.add('hidden'); });
