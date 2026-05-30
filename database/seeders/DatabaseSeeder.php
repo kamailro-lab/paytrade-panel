@@ -20,6 +20,15 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
+        User::updateOrCreate(
+            ['email' => 'info@paytrade.ie'],
+            [
+                'name' => 'Paytrade',
+                'password' => Hash::make('paytrade123'),
+                'email_verified_at' => now(),
+            ]
+        );
+
         $defaults = [
             'company_name' => 'Twoja firma sp. z o.o.',
             'company_address' => 'Dublin, Ireland',

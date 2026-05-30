@@ -20,8 +20,9 @@ class VehicleRequest extends FormRequest
             'registration' => [
                 'required',
                 'string',
+                'min:4',
                 'max:12',
-                'regex:/^\d{2,3}-[A-Z]{1,2}-\d{1,6}$/',
+                'regex:/^[A-Z0-9\-]+$/',
                 Rule::unique('vehicles', 'registration')->ignore($vehicleId),
             ],
             'logbook_no' => ['nullable', 'string', 'max:20'],
@@ -44,8 +45,9 @@ class VehicleRequest extends FormRequest
     {
         return [
             'registration.required' => 'Podaj numer rejestracyjny.',
-            'registration.regex' => 'Nieprawidłowy format. Przykład: 152-D-12345.',
+            'registration.regex' => 'Tylko litery, cyfry i myślniki. Przykład: 131-D-1108 lub 131D1108.',
             'registration.unique' => 'Auto z tą rejestracją już istnieje.',
+            'registration.min' => 'Rejestracja za krótka.',
             'make.required' => 'Podaj markę auta.',
             'model.required' => 'Podaj model auta.',
             'year.min' => 'Rok nie może być wcześniejszy niż 1950.',
@@ -58,9 +60,13 @@ class VehicleRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         if ($this->has('registration')) {
-            $this->merge([
-                'registration' => strtoupper(trim($this->input('registration'))),
-            ]);
+            $raw = strtoupper(preg_replace('/[^A-Z0-9]/i', '', (string) $this->input('registration')));
+
+            if (preg_match('/^(\d{2,3})([A-Z]{1,2})(\d{1,6})$/', $raw, $m)) {
+                $this->merge(['registration' => "{$m[1]}-{$m[2]}-{$m[3]}"]);
+            } else {
+                $this->merge(['registration' => $raw]);
+            }
         }
     }
 }

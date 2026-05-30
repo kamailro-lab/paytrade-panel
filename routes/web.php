@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\VehicleController;
+use App\Http\Controllers\VehicleLookupController;
 use App\Models\Sale;
 use App\Models\Vehicle;
 use Illuminate\Support\Facades\Route;
@@ -27,6 +28,12 @@ Route::middleware(['auth'])->group(function () {
     })->name('dashboard');
 
     Route::resource('vehicles', VehicleController::class);
+
+    Route::prefix('vehicles/lookup')->name('vehicles.lookup.')->group(function () {
+        Route::get('status', [VehicleLookupController::class, 'status'])->name('status');
+        Route::post('description', [VehicleLookupController::class, 'fromDescription'])->name('description');
+        Route::post('logbook', [VehicleLookupController::class, 'fromLogbookImage'])->name('logbook');
+    });
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');

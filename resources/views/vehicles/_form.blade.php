@@ -7,12 +7,42 @@
 <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
     <div class="sm:col-span-2">
         <label class="block text-base font-semibold text-gray-700 mb-1">Numer rejestracyjny *</label>
-        <input type="text" name="registration" required
+        <input type="text" id="registration-input" name="registration" required
                value="{{ old('registration', $vehicle->registration) }}"
-               placeholder="np. 152-D-12345"
+               placeholder="np. 131D1108 lub 131-D-1108"
                class="w-full px-4 py-3 text-lg border-2 border-gray-300 rounded-lg uppercase focus:border-indigo-500 focus:outline-none">
         @error('registration') <p class="mt-1 text-red-600 text-sm">{{ $message }}</p> @enderror
-        <p class="mt-1 text-xs text-gray-500">Format: 2-3 cyfry, kod hrabstwa (D, KE, CW...), numer</p>
+        <p class="mt-1 text-xs text-gray-500">Możesz wpisać bez myślników (np. <code>131D1108</code>) — system sam doda.</p>
+    </div>
+
+    <div class="sm:col-span-2 bg-indigo-50 border-2 border-dashed border-indigo-200 rounded-lg p-4">
+        <div class="flex items-center justify-between mb-3">
+            <h3 class="font-semibold text-indigo-900">🤖 AI wypełnij za mnie</h3>
+            <span id="ai-status" class="text-xs text-gray-500"></span>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+            <button type="button" id="ai-tab-desc" class="px-4 py-2 bg-white border-2 border-indigo-300 rounded-lg font-semibold text-indigo-700 hover:bg-indigo-100">📝 Wklej opis</button>
+            <button type="button" id="ai-tab-photo" class="px-4 py-2 bg-white border-2 border-indigo-300 rounded-lg font-semibold text-indigo-700 hover:bg-indigo-100">📷 Zdjęcie logbooka</button>
+        </div>
+
+        <div id="ai-panel-desc" class="hidden">
+            <textarea id="ai-description" rows="3" placeholder="np. BMW 116 z 2013, diesel 1995cc, czarny metalik, 5-drzwiowy, 145000km"
+                      class="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:border-indigo-500 focus:outline-none"></textarea>
+            <button type="button" id="ai-submit-desc" class="mt-2 px-5 py-2 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 disabled:opacity-50">
+                🪄 Wypełnij formularz
+            </button>
+        </div>
+
+        <div id="ai-panel-photo" class="hidden">
+            <input type="file" id="ai-image" accept="image/jpeg,image/png,image/webp" class="w-full px-3 py-2 border-2 border-gray-300 rounded-lg">
+            <p class="mt-1 text-xs text-gray-500">Zrób telefonem ostre zdjęcie strony logbooka (max 5MB)</p>
+            <button type="button" id="ai-submit-photo" class="mt-2 px-5 py-2 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 disabled:opacity-50">
+                🪄 Odczytaj i wypełnij
+            </button>
+        </div>
+
+        <div id="ai-message" class="hidden mt-3 p-3 rounded text-sm"></div>
     </div>
 
     <div>
@@ -137,3 +167,108 @@
         ✖ Anuluj
     </a>
 </div>
+
+<script>
+(function () {
+    const csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    const $ = (s) => document.querySelector(s);
+    const regInput = $('#registration-input');
+    const aiStatus = $('#ai-status');
+    const aiMessage = $('#ai-message');
+    const tabs = {desc: $('#ai-panel-desc'), photo: $('#ai-panel-photo')};
+
+    regInput.addEventListener('blur', () => {
+        const raw = regInput.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+        const m = raw.match(/^(\d{2,3})([A-Z]{1,2})(\d{1,6})$/);
+        if (m) regInput.value = `${m[1]}-${m[2]}-${m[3]}`;
+    });
+
+    fetch('{{ route('vehicles.lookup.status') }}', {headers: {Accept: 'application/json'}})
+        .then(r => r.json())
+        .then(d => {
+            aiStatus.textContent = d.ai_configured ? '✅ AI gotowe' : '⚠️ Brak klucza Claude — ustaw ANTHROPIC_API_KEY w .env';
+            aiStatus.className = 'text-xs ' + (d.ai_configured ? 'text-green-600' : 'text-amber-700');
+        })
+        .catch(() => { aiStatus.textContent = ''; });
+
+    $('#ai-tab-desc').addEventListener('click', () => { tabs.desc.classList.toggle('hidden'); tabs.photo.classList.add('hidden'); });
+    $('#ai-tab-photo').addEventListener('click', () => { tabs.photo.classList.toggle('hidden'); tabs.desc.classList.add('hidden'); });
+
+    function showMessage(text, ok) {
+        aiMessage.textContent = text;
+        aiMessage.className = 'mt-3 p-3 rounded text-sm ' + (ok ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800');
+        aiMessage.classList.remove('hidden');
+    }
+
+    function setField(name, value) {
+        if (value === null || value === undefined || value === '') return;
+        const el = document.querySelector(`[name="${name}"]`);
+        if (!el) return;
+        if (el.tagName === 'SELECT') {
+            const opt = [...el.options].find(o => o.value === String(value));
+            if (opt) el.value = opt.value;
+        } else {
+            el.value = value;
+        }
+    }
+
+    function applyData(data) {
+        const fields = ['logbook_no', 'make', 'model', 'year', 'engine_cc', 'fuel', 'color', 'mileage_km', 'body', 'doors'];
+        let filled = 0;
+        fields.forEach(f => {
+            if (data[f] !== null && data[f] !== undefined && data[f] !== '') {
+                setField(f, data[f]);
+                filled++;
+            }
+        });
+        if (data.registration) setField('registration', data.registration);
+        showMessage(`✅ AI uzupełniło ${filled} pól. Sprawdź i popraw jeśli trzeba.`, true);
+    }
+
+    $('#ai-submit-desc').addEventListener('click', async (e) => {
+        const btn = e.currentTarget;
+        const desc = $('#ai-description').value.trim();
+        if (!desc) { showMessage('Wpisz opis auta.', false); return; }
+        if (!regInput.value.trim()) { showMessage('Wpisz najpierw numer rejestracyjny.', false); return; }
+        btn.disabled = true; btn.textContent = '⏳ Pytam Claude...';
+        try {
+            const r = await fetch('{{ route('vehicles.lookup.description') }}', {
+                method: 'POST',
+                headers: {'X-CSRF-TOKEN': csrf, 'Accept': 'application/json', 'Content-Type': 'application/json'},
+                body: JSON.stringify({registration: regInput.value, description: desc}),
+            });
+            const j = await r.json();
+            if (r.ok && j.ok) applyData(j.data);
+            else showMessage(j.error || 'Coś poszło nie tak.', false);
+        } catch (err) {
+            showMessage('Błąd sieci: ' + err.message, false);
+        } finally {
+            btn.disabled = false; btn.textContent = '🪄 Wypełnij formularz';
+        }
+    });
+
+    $('#ai-submit-photo').addEventListener('click', async (e) => {
+        const btn = e.currentTarget;
+        const file = $('#ai-image').files[0];
+        if (!file) { showMessage('Wybierz zdjęcie.', false); return; }
+        if (file.size > 5 * 1024 * 1024) { showMessage('Zdjęcie za duże (max 5MB).', false); return; }
+        btn.disabled = true; btn.textContent = '⏳ Czytam zdjęcie...';
+        try {
+            const fd = new FormData();
+            fd.append('image', file);
+            const r = await fetch('{{ route('vehicles.lookup.logbook') }}', {
+                method: 'POST',
+                headers: {'X-CSRF-TOKEN': csrf, 'Accept': 'application/json'},
+                body: fd,
+            });
+            const j = await r.json();
+            if (r.ok && j.ok) applyData(j.data);
+            else showMessage(j.error || 'AI nie odczytało zdjęcia.', false);
+        } catch (err) {
+            showMessage('Błąd sieci: ' + err.message, false);
+        } finally {
+            btn.disabled = false; btn.textContent = '🪄 Odczytaj i wypełnij';
+        }
+    });
+})();
+</script>
