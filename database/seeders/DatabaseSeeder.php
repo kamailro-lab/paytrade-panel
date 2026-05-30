@@ -2,24 +2,34 @@
 
 namespace Database\Seeders;
 
+use App\Models\Setting;
 use App\Models\User;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
 {
-    use WithoutModelEvents;
-
-    /**
-     * Seed the application's database.
-     */
     public function run(): void
     {
-        // User::factory(10)->create();
+        User::updateOrCreate(
+            ['email' => 'admin@cars.ie'],
+            [
+                'name' => 'Admin',
+                'password' => Hash::make('password'),
+                'email_verified_at' => now(),
+            ]
+        );
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
+        $defaults = [
+            'company_name' => 'Twoja firma sp. z o.o.',
+            'company_address' => 'Dublin, Ireland',
+            'company_vat_number' => 'IE0000000A',
+            'company_phone' => '+353 1 000 0000',
+            'invoice_prefix' => date('Y'),
+            'invoice_next_number' => 1,
+        ];
+        foreach ($defaults as $key => $value) {
+            Setting::firstOrCreate(['key' => $key], ['value' => (string) $value]);
+        }
     }
 }
