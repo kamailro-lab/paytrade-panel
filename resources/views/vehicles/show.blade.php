@@ -226,7 +226,18 @@
                             <div><dt class="text-sm text-gray-500">Nr umowy kredytu</dt><dd>{{ $vehicle->sale->credit_contract_number }}</dd></div>
                         @endif
                     </dl>
-                    <div class="flex gap-2">
+                    <div class="flex gap-2 flex-wrap">
+                        <form method="POST" action="{{ route('invoices.generate', $vehicle) }}">
+                            @csrf
+                            <button type="submit" class="px-4 py-2 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700">
+                                📄 {{ $vehicle->sale->invoice ? 'Regeneruj fakturę PDF' : 'Wygeneruj fakturę PDF' }}
+                            </button>
+                        </form>
+                        @if($vehicle->sale->invoice && $vehicle->sale->invoice->pdf_path)
+                            <a href="{{ route('invoices.download', $vehicle->sale->invoice) }}" class="px-4 py-2 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700">
+                                📥 Pobierz {{ $vehicle->sale->invoice->invoice_number }}
+                            </a>
+                        @endif
                         <button type="button" onclick="document.getElementById('sale-form').classList.toggle('hidden')" class="px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-700">✏️ Edytuj sprzedaż</button>
                         <form method="POST" action="{{ route('sales.destroy', $vehicle) }}" onsubmit="return confirm('Usunąć sprzedaż? Auto wróci do stocku.')">
                             @csrf @method('DELETE')

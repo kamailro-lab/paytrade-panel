@@ -2,9 +2,11 @@
 
 use App\Http\Controllers\ContractorController;
 use App\Http\Controllers\CostController;
+use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PurchaseController;
 use App\Http\Controllers\SaleController;
+use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\VehicleController;
 use App\Http\Controllers\VehicleLookupController;
 use App\Models\Sale;
@@ -40,6 +42,13 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('vehicles/{vehicle}/sale', [SaleController::class, 'destroy'])->name('sales.destroy');
     Route::post('vehicles/{vehicle}/costs', [CostController::class, 'store'])->name('costs.store');
     Route::delete('vehicles/{vehicle}/costs/{cost}', [CostController::class, 'destroy'])->name('costs.destroy');
+
+    Route::get('invoices', [InvoiceController::class, 'index'])->name('invoices.index');
+    Route::post('vehicles/{vehicle}/invoice', [InvoiceController::class, 'generate'])->name('invoices.generate');
+    Route::get('invoices/{invoice}/download', [InvoiceController::class, 'download'])->name('invoices.download');
+
+    Route::get('settings', [SettingsController::class, 'edit'])->name('settings.edit');
+    Route::patch('settings', [SettingsController::class, 'update'])->name('settings.update');
 
     Route::prefix('vehicles/lookup')->name('vehicles.lookup.')->group(function () {
         Route::get('status', [VehicleLookupController::class, 'status'])->name('status');

@@ -30,12 +30,14 @@ class DatabaseSeeder extends Seeder
         );
 
         $defaults = [
-            'company_name' => 'Twoja firma sp. z o.o.',
+            'company_name' => 'Paytrade / MRtardex',
             'company_address' => 'Dublin, Ireland',
-            'company_vat_number' => 'IE0000000A',
-            'company_phone' => '+353 1 000 0000',
-            'invoice_prefix' => date('Y'),
-            'invoice_next_number' => 1,
+            'company_eir_code' => '',
+            'company_vat_number' => '',
+            'company_phone' => '',
+            'company_email' => 'info@paytrade.ie',
+            'company_iban' => '',
+            'company_bank' => '',
         ];
         foreach ($defaults as $key => $value) {
             Setting::firstOrCreate(['key' => $key], ['value' => (string) $value]);

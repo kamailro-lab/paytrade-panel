@@ -32,6 +32,11 @@ class Sale extends Model
             + $this->payment_cash_deposit + $this->payment_trade);
     }
 
+    public function invoice(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(Invoice::class);
+    }
+
     public function vehicle(): BelongsTo
     {
         return $this->belongsTo(Vehicle::class);
@@ -40,10 +45,5 @@ class Sale extends Model
     public function contractor(): BelongsTo
     {
         return $this->belongsTo(Contractor::class);
-    }
-
-    public function invoice(): HasOne
-    {
-        return $this->hasOne(Invoice::class);
     }
 }

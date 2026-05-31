@@ -18,6 +18,12 @@
                     <x-nav-link :href="route('contractors.index')" :active="request()->routeIs('contractors.*')">
                         Kontrahenci
                     </x-nav-link>
+                    <x-nav-link :href="route('invoices.index')" :active="request()->routeIs('invoices.*')">
+                        Faktury
+                    </x-nav-link>
+                    <x-nav-link :href="route('settings.edit')" :active="request()->routeIs('settings.*')">
+                        Ustawienia
+                    </x-nav-link>
                     <x-nav-link href="#" :active="false">
                         <span class="text-gray-400">Faktury</span>
                     </x-nav-link>
@@ -69,6 +75,8 @@
             <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">Panel</x-responsive-nav-link>
             <x-responsive-nav-link :href="route('vehicles.index')" :active="request()->routeIs('vehicles.*')">Auta</x-responsive-nav-link>
             <x-responsive-nav-link :href="route('contractors.index')" :active="request()->routeIs('contractors.*')">Kontrahenci</x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('invoices.index')" :active="request()->routeIs('invoices.*')">Faktury</x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('settings.edit')" :active="request()->routeIs('settings.*')">Ustawienia</x-responsive-nav-link>
         </div>
         <div class="pt-4 pb-1 border-t border-gray-200">
             <div class="px-4">
