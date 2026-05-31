@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ContractorController;
 use App\Http\Controllers\CostController;
+use App\Http\Controllers\ImportController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PurchaseController;
@@ -49,6 +50,9 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('settings', [SettingsController::class, 'edit'])->name('settings.edit');
     Route::patch('settings', [SettingsController::class, 'update'])->name('settings.update');
+
+    Route::get('import', [ImportController::class, 'form'])->name('import.form');
+    Route::post('import', [ImportController::class, 'store'])->name('import.store');
 
     Route::prefix('vehicles/lookup')->name('vehicles.lookup.')->group(function () {
         Route::get('status', [VehicleLookupController::class, 'status'])->name('status');
