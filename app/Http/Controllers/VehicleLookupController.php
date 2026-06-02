@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Services\ClaudeAiParser;
 use App\Services\IeRegistrationDecoder;
+use App\Services\MotorCheckLookup;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -11,7 +12,8 @@ class VehicleLookupController extends Controller
 {
     public function __construct(
         private readonly ClaudeAiParser $ai,
-        private readonly IeRegistrationDecoder $decoder
+        private readonly IeRegistrationDecoder $decoder,
+        private readonly MotorCheckLookup $motorcheck
     ) {
     }
 
@@ -30,6 +32,20 @@ class VehicleLookupController extends Controller
         return $decoded
             ? response()->json(['ok' => true, 'data' => $decoded])
             : response()->json(['ok' => false, 'error' => 'Nie rozpoznano formatu rejestracji.'], 422);
+    }
+
+    public function fromMotorCheck(Request $request): JsonResponse
+    {
+        $reg = (string) $request->query('reg', '');
+        if (strlen($reg) < 4) {
+            return response()->json(['ok' => false, 'error' => 'Podaj rejestrację.'], 422);
+        }
+
+        $data = $this->motorcheck->lookup($reg);
+
+        return $data
+            ? response()->json(['ok' => true, 'data' => $data])
+            : response()->json(['ok' => false, 'error' => 'MotorCheck nie zwrócił danych dla tej rejestracji.'], 404);
     }
 
     public function fromDescription(Request $request): JsonResponse

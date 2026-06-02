@@ -179,24 +179,67 @@
     const tabs = {desc: $('#ai-panel-desc'), photo: $('#ai-panel-photo')};
 
     const decodedBox = document.getElementById('reg-decoded');
+
+    function setIfEmpty(name, value) {
+        if (value === null || value === undefined || value === '') return;
+        const el = document.querySelector(`[name="${name}"]`);
+        if (!el || el.value) return;
+        if (el.tagName === 'SELECT') {
+            const opt = [...el.options].find(o => o.value === String(value));
+            if (opt) el.value = opt.value;
+        } else {
+            el.value = value;
+        }
+    }
+
+    let lookupBusy = false;
     regInput.addEventListener('blur', async () => {
         const raw = regInput.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
         const m = raw.match(/^(\d{2,3})([A-Z]{1,2})(\d{1,6})$/);
         if (m) regInput.value = `${m[1]}-${m[2]}-${m[3]}`;
 
-        if (regInput.value.length < 4) return;
+        if (regInput.value.length < 4 || lookupBusy) return;
+        lookupBusy = true;
+
+        // 1. Decode (instant — rok + hrabstwo)
         try {
             const r = await fetch('{{ route('vehicles.lookup.decode') }}?reg=' + encodeURIComponent(regInput.value));
             const j = await r.json();
             if (j.ok) {
-                decodedBox.innerHTML = j.data.display + ' &nbsp; <span class="text-gray-500">(automatycznie z rejestracji)</span>';
+                decodedBox.innerHTML = j.data.display + ' &nbsp; <span class="text-gray-500">(z rejestracji)</span>';
                 decodedBox.classList.remove('hidden');
-                const yearField = document.querySelector('[name="year"]');
-                if (yearField && !yearField.value) yearField.value = j.data.year;
+                setIfEmpty('year', j.data.year);
             } else {
                 decodedBox.classList.add('hidden');
             }
         } catch (e) {}
+
+        // 2. MotorCheck lookup (~2s — pełne dane z motorcheck.ie)
+        decodedBox.innerHTML += ' &nbsp; <span class="text-indigo-600">⏳ Pobieram z MotorCheck...</span>';
+        decodedBox.classList.remove('hidden');
+
+        try {
+            const r = await fetch('{{ route('vehicles.lookup.motorcheck') }}?reg=' + encodeURIComponent(regInput.value));
+            const j = await r.json();
+            if (j.ok && j.data) {
+                const d = j.data;
+                setIfEmpty('make', d.make);
+                setIfEmpty('model', d.model);
+                setIfEmpty('year', d.year);
+                setIfEmpty('engine_cc', d.engine_cc);
+                setIfEmpty('fuel', d.fuel);
+                setIfEmpty('color', d.color);
+                setIfEmpty('body', d.body);
+                decodedBox.innerHTML = '✅ <strong>' + d.make + ' ' + d.model + ', ' + d.year + '</strong> — ' + (d.engine_cc || '?') + 'ccm · ' + (d.fuel || '?') + ' · ' + (d.color || '?') + ' <span class="text-gray-500">(z motorcheck.ie)</span>';
+                decodedBox.className = 'mt-2 p-2 bg-green-50 border border-green-300 rounded text-sm text-green-900';
+            } else {
+                decodedBox.innerHTML = decodedBox.innerHTML.replace(/⏳[^<]*MotorCheck[^<]*/, '<span class="text-amber-700">⚠️ Nie ma w MotorCheck — wypełnij ręcznie</span>');
+            }
+        } catch (e) {
+            decodedBox.innerHTML = decodedBox.innerHTML.replace(/⏳[^<]*MotorCheck[^<]*/, '<span class="text-amber-700">⚠️ MotorCheck niedostępny</span>');
+        } finally {
+            lookupBusy = false;
+        }
     });
 
     fetch('{{ route('vehicles.lookup.status') }}', {headers: {Accept: 'application/json'}})
