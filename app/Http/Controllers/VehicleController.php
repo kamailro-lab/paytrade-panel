@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\VehicleRequest;
 use App\Models\Vehicle;
+use App\Services\MotorCheckLookup;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
@@ -75,5 +76,66 @@ class VehicleController extends Controller
 
         return redirect()->route('vehicles.index')
             ->with('success', 'Auto usunięte.');
+    }
+
+    public function enrichFromMotorCheck(MotorCheckLookup $lookup): RedirectResponse
+    {
+        set_time_limit(0);
+        @ini_set('max_execution_time', '0');
+
+        $candidates = Vehicle::query()
+            ->where(function ($q) {
+                $q->where('make', 'Unknown')
+                  ->orWhere('make', '')
+                  ->orWhereNull('make')
+                  ->orWhere('model', '—')
+                  ->orWhere('model', '')
+                  ->orWhereNull('model')
+                  ->orWhereNull('year')
+                  ->orWhereNull('engine_cc')
+                  ->orWhereNull('fuel')
+                  ->orWhereNull('color');
+            })
+            ->limit(100)
+            ->get();
+
+        $stats = ['checked' => 0, 'enriched' => 0, 'not_found' => 0, 'errors' => 0];
+
+        foreach ($candidates as $vehicle) {
+            $stats['checked']++;
+            try {
+                $data = $lookup->lookup($vehicle->registration);
+                if (!$data) {
+                    $stats['not_found']++;
+                    continue;
+                }
+
+                $updates = [];
+                foreach (['make', 'model', 'year', 'engine_cc', 'fuel', 'color', 'body'] as $field) {
+                    $newValue = $data[$field] ?? null;
+                    $oldValue = $vehicle->{$field};
+                    $isOldEmpty = $oldValue === null || $oldValue === '' || $oldValue === '—' || $oldValue === 'Unknown';
+
+                    if ($newValue !== null && $newValue !== '' && $isOldEmpty) {
+                        $updates[$field] = $newValue;
+                    }
+                }
+
+                if (!empty($updates)) {
+                    $vehicle->update($updates);
+                    $stats['enriched']++;
+                }
+            } catch (\Throwable $e) {
+                $stats['errors']++;
+            }
+        }
+
+        return redirect()->route('vehicles.index')->with(
+            'success',
+            sprintf(
+                '🔄 MotorCheck: sprawdzono %d aut · uzupełniono %d · brak w bazie %d · błędy %d',
+                $stats['checked'], $stats['enriched'], $stats['not_found'], $stats['errors']
+            )
+        );
     }
 }

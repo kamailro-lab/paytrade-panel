@@ -1,10 +1,18 @@
 <x-app-layout>
     <x-slot name="header">
-        <div class="flex items-center justify-between">
+        <div class="flex items-center justify-between flex-wrap gap-2">
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">🚗 Auta</h2>
-            <a href="{{ route('vehicles.create') }}" class="px-5 py-2.5 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition">
-                ➕ Dodaj auto
-            </a>
+            <div class="flex gap-2 flex-wrap">
+                <form method="POST" action="{{ route('vehicles.enrich') }}" onsubmit="this.querySelector('button').disabled=true; this.querySelector('button').textContent='⏳ Pobieram z MotorCheck...'; return confirm('Sprawdzić wszystkie auta z brakującymi danymi w MotorCheck.ie? (potrwa ~2 min dla 100 aut)');">
+                    @csrf
+                    <button type="submit" class="px-5 py-2.5 bg-amber-500 text-white font-semibold rounded-lg hover:bg-amber-600 transition disabled:opacity-50">
+                        🔄 Uzupełnij brakujące (MotorCheck)
+                    </button>
+                </form>
+                <a href="{{ route('vehicles.create') }}" class="px-5 py-2.5 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition">
+                    ➕ Dodaj auto
+                </a>
+            </div>
         </div>
     </x-slot>
 
