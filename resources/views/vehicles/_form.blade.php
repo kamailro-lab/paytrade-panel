@@ -13,6 +13,7 @@
                class="w-full px-4 py-3 text-lg border-2 border-gray-300 rounded-lg uppercase focus:border-indigo-500 focus:outline-none">
         @error('registration') <p class="mt-1 text-red-600 text-sm">{{ $message }}</p> @enderror
         <p class="mt-1 text-xs text-gray-500">Możesz wpisać bez myślników (np. <code>131D1108</code>) — system sam doda.</p>
+        <div id="reg-decoded" class="hidden mt-2 p-2 bg-blue-50 border border-blue-200 rounded text-sm text-blue-900"></div>
     </div>
 
     <div id="ai-section" class="sm:col-span-2 bg-indigo-50 border-2 border-dashed border-indigo-200 rounded-lg p-4 hidden">
@@ -177,10 +178,25 @@
     const aiMessage = $('#ai-message');
     const tabs = {desc: $('#ai-panel-desc'), photo: $('#ai-panel-photo')};
 
-    regInput.addEventListener('blur', () => {
+    const decodedBox = document.getElementById('reg-decoded');
+    regInput.addEventListener('blur', async () => {
         const raw = regInput.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
         const m = raw.match(/^(\d{2,3})([A-Z]{1,2})(\d{1,6})$/);
         if (m) regInput.value = `${m[1]}-${m[2]}-${m[3]}`;
+
+        if (regInput.value.length < 4) return;
+        try {
+            const r = await fetch('{{ route('vehicles.lookup.decode') }}?reg=' + encodeURIComponent(regInput.value));
+            const j = await r.json();
+            if (j.ok) {
+                decodedBox.innerHTML = j.data.display + ' &nbsp; <span class="text-gray-500">(automatycznie z rejestracji)</span>';
+                decodedBox.classList.remove('hidden');
+                const yearField = document.querySelector('[name="year"]');
+                if (yearField && !yearField.value) yearField.value = j.data.year;
+            } else {
+                decodedBox.classList.add('hidden');
+            }
+        } catch (e) {}
     });
 
     fetch('{{ route('vehicles.lookup.status') }}', {headers: {Accept: 'application/json'}})

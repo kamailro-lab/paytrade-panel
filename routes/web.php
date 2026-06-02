@@ -56,6 +56,7 @@ Route::middleware(['auth'])->group(function () {
 
     Route::prefix('vehicles/lookup')->name('vehicles.lookup.')->group(function () {
         Route::get('status', [VehicleLookupController::class, 'status'])->name('status');
+        Route::get('decode', [VehicleLookupController::class, 'decodeRegistration'])->name('decode');
         Route::post('description', [VehicleLookupController::class, 'fromDescription'])->name('description');
         Route::post('logbook', [VehicleLookupController::class, 'fromLogbookImage'])->name('logbook');
     });

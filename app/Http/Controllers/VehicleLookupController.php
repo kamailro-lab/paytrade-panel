@@ -3,13 +3,16 @@
 namespace App\Http\Controllers;
 
 use App\Services\ClaudeAiParser;
+use App\Services\IeRegistrationDecoder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class VehicleLookupController extends Controller
 {
-    public function __construct(private readonly ClaudeAiParser $ai)
-    {
+    public function __construct(
+        private readonly ClaudeAiParser $ai,
+        private readonly IeRegistrationDecoder $decoder
+    ) {
     }
 
     public function status(): JsonResponse
@@ -17,6 +20,16 @@ class VehicleLookupController extends Controller
         return response()->json([
             'ai_configured' => $this->ai->isConfigured(),
         ]);
+    }
+
+    public function decodeRegistration(Request $request): JsonResponse
+    {
+        $reg = (string) $request->query('reg', '');
+        $decoded = $this->decoder->decode($reg);
+
+        return $decoded
+            ? response()->json(['ok' => true, 'data' => $decoded])
+            : response()->json(['ok' => false, 'error' => 'Nie rozpoznano formatu rejestracji.'], 422);
     }
 
     public function fromDescription(Request $request): JsonResponse
