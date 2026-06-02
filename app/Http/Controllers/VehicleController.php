@@ -19,10 +19,14 @@ class VehicleController extends Controller
             $query->where('status', $status);
         }
         if ($search = $request->query('q')) {
-            $query->where(function ($q) use ($search) {
+            $normalized = strtoupper(preg_replace('/[^A-Z0-9]/i', '', $search));
+
+            $query->where(function ($q) use ($search, $normalized) {
                 $q->where('registration', 'like', "%{$search}%")
+                  ->orWhereRaw("UPPER(REPLACE(registration, '-', '')) LIKE ?", ["%{$normalized}%"])
                   ->orWhere('make', 'like', "%{$search}%")
-                  ->orWhere('model', 'like', "%{$search}%");
+                  ->orWhere('model', 'like', "%{$search}%")
+                  ->orWhere('logbook_no', 'like', "%{$search}%");
             });
         }
 
