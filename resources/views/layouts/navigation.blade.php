@@ -3,8 +3,9 @@
         <div class="flex justify-between h-16">
             <div class="flex">
                 <div class="shrink-0 flex items-center">
-                    <a href="{{ route('dashboard') }}" class="text-xl font-bold text-indigo-700">
-                        🚗 Cars Ireland
+                    <a href="{{ route('dashboard') }}" class="flex items-center gap-2 text-xl font-bold text-indigo-700 hover:opacity-80 transition">
+                        <img src="{{ asset('favicon.svg') }}" alt="" class="h-9 w-9">
+                        <span>Paytrade</span>
                     </a>
                 </div>
 
