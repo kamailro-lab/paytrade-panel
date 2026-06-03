@@ -3,8 +3,9 @@
         <div class="flex justify-between h-16">
             <div class="flex">
                 <div class="shrink-0 flex items-center">
-                    <a href="{{ route('dashboard') }}" class="flex items-center hover:opacity-80 transition">
-                        <img src="{{ asset('logo-small.png') }}" alt="Paytrade" class="h-12">
+                    <a href="{{ route('dashboard') }}" class="flex items-center gap-2 hover:opacity-80 transition">
+                        <img src="{{ asset('favicon.png') }}" alt="Paytrade" class="h-8 w-8">
+                        <span class="text-lg font-bold text-gray-800 hidden sm:inline">Paytrade</span>
                     </a>
                 </div>
 

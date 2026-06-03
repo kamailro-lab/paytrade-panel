@@ -30,7 +30,10 @@ class VehicleController extends Controller
             });
         }
 
-        $vehicles = $query->latest()->paginate(20)->withQueryString();
+        $perPage = (int) $request->query('per_page', 50);
+        $perPage = in_array($perPage, [20, 50, 100, 200]) ? $perPage : 50;
+
+        $vehicles = $query->latest()->paginate($perPage)->withQueryString();
 
         return view('vehicles.index', [
             'vehicles' => $vehicles,
