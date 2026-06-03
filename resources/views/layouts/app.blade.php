@@ -20,10 +20,7 @@
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
     <body class="font-sans antialiased">
-        <div class="min-h-screen bg-gray-100 relative"
-             style="background-image: url('{{ asset('logo.png') }}'); background-repeat: no-repeat; background-position: center 60%; background-size: 800px auto; background-attachment: fixed;">
-        <div class="absolute inset-0 bg-gray-100/95 pointer-events-none"></div>
-        <div class="relative">
+        <div class="min-h-screen bg-gray-100">
             @include('layouts.navigation')
 
             <!-- Page Heading -->
@@ -39,8 +36,6 @@
             <main>
                 {{ $slot }}
             </main>
-        </div>
-        </div>
         </div>
 
         {{-- 🎤 Voice Input — globalny mikrofon (Web Speech API, darmowy) --}}
