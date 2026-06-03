@@ -6,9 +6,9 @@
         <meta name="csrf-token" content="{{ csrf_token() }}">
         <meta name="theme-color" content="#4338ca">
 
-        <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
+        <link rel="icon" type="image/png" sizes="64x64" href="{{ asset('favicon.png') }}">
         <link rel="alternate icon" href="{{ asset('favicon.ico') }}">
-        <link rel="apple-touch-icon" href="{{ asset('favicon.svg') }}">
+        <link rel="apple-touch-icon" sizes="512x512" href="{{ asset('apple-touch-icon.png') }}">
 
         <title>{{ config('app.name', 'Paytrade') }}</title>
 
