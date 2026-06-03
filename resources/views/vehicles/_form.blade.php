@@ -146,11 +146,54 @@
         </select>
     </div>
 
-    <div>
-        <label class="block text-base font-semibold text-gray-700 mb-1">NCT do (przegląd)</label>
-        <input type="date" name="nct_expiry"
-               value="{{ old('nct_expiry', $vehicle->nct_expiry?->format('Y-m-d')) }}"
-               class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-500 focus:outline-none">
+    <div class="sm:col-span-2 bg-amber-50 border-2 border-amber-200 rounded-lg p-4">
+        <h3 class="font-bold text-amber-900 mb-3">📋 Stan techniczny / Gotowość do sprzedaży</h3>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {{-- NCT — najważniejszy, na pierwszym miejscu --}}
+            <div class="sm:col-span-2 p-3 bg-white rounded-lg border-2 border-amber-300">
+                <div class="flex items-center gap-3 mb-2">
+                    <input type="checkbox" name="nct_passed" id="nct_passed" value="1"
+                           @checked(old('nct_passed', $vehicle->nct_passed))
+                           class="w-6 h-6 accent-green-600 cursor-pointer">
+                    <label for="nct_passed" class="text-lg font-bold cursor-pointer">🟢 NCT zaliczone</label>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">NCT ważne do:</label>
+                    <input type="date" name="nct_expiry"
+                           value="{{ old('nct_expiry', $vehicle->nct_expiry?->format('Y-m-d')) }}"
+                           class="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:border-indigo-500 focus:outline-none">
+                </div>
+            </div>
+
+            {{-- Serwis --}}
+            <div class="p-3 bg-white rounded-lg border border-gray-200">
+                <div class="flex items-center gap-3 mb-2">
+                    <input type="checkbox" name="service_done" id="service_done" value="1"
+                           @checked(old('service_done', $vehicle->service_done))
+                           class="w-5 h-5 accent-green-600 cursor-pointer">
+                    <label for="service_done" class="font-semibold cursor-pointer">🔧 Serwis zrobiony</label>
+                </div>
+                <label class="block text-xs text-gray-600 mb-1">Data serwisu:</label>
+                <input type="date" name="service_date"
+                       value="{{ old('service_date', $vehicle->service_date?->format('Y-m-d')) }}"
+                       class="w-full px-2 py-1.5 text-sm border border-gray-300 rounded focus:border-indigo-500 focus:outline-none">
+            </div>
+
+            {{-- Rozrząd --}}
+            <div class="p-3 bg-white rounded-lg border border-gray-200">
+                <div class="flex items-center gap-3 mb-2">
+                    <input type="checkbox" name="timing_belt_checked" id="timing_belt_checked" value="1"
+                           @checked(old('timing_belt_checked', $vehicle->timing_belt_checked))
+                           class="w-5 h-5 accent-green-600 cursor-pointer">
+                    <label for="timing_belt_checked" class="font-semibold cursor-pointer">⚙️ Rozrząd sprawdzony</label>
+                </div>
+                <label class="block text-xs text-gray-600 mb-1">Data sprawdzenia:</label>
+                <input type="date" name="timing_belt_date"
+                       value="{{ old('timing_belt_date', $vehicle->timing_belt_date?->format('Y-m-d')) }}"
+                       class="w-full px-2 py-1.5 text-sm border border-gray-300 rounded focus:border-indigo-500 focus:outline-none">
+            </div>
+        </div>
     </div>
 
     <div class="sm:col-span-2">

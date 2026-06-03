@@ -37,8 +37,21 @@ class VehicleRequest extends FormRequest
             'doors' => ['nullable', 'integer', 'min:2', 'max:7'],
             'status' => ['required', 'in:stock,sold,service,written_off'],
             'nct_expiry' => ['nullable', 'date'],
+            'nct_passed' => ['nullable', 'boolean'],
+            'service_done' => ['nullable', 'boolean'],
+            'service_date' => ['nullable', 'date'],
+            'timing_belt_checked' => ['nullable', 'boolean'],
+            'timing_belt_date' => ['nullable', 'date'],
             'notes' => ['nullable', 'string', 'max:2000'],
         ];
+    }
+
+    protected function passedValidation(): void
+    {
+        // Checkboxy: jeśli nie zaznaczone → false (HTML form nie wysyła unchecked)
+        foreach (['nct_passed', 'service_done', 'timing_belt_checked'] as $f) {
+            if (!$this->has($f)) $this->merge([$f => false]);
+        }
     }
 
     public function messages(): array

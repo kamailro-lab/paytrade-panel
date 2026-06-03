@@ -13,8 +13,14 @@
                     <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                         Panel
                     </x-nav-link>
-                    <x-nav-link :href="route('vehicles.index')" :active="request()->routeIs('vehicles.*')">
+                    <x-nav-link :href="route('vehicles.index')" :active="request()->routeIs('vehicles.*') && !request('ready')">
                         Auta
+                    </x-nav-link>
+                    <x-nav-link :href="route('vehicles.index', ['status' => 'stock'])" :active="request('status') === 'stock'">
+                        🟢 W stocku
+                    </x-nav-link>
+                    <x-nav-link :href="route('vehicles.index', ['ready' => 'full'])" :active="request('ready') === 'full'">
+                        ✅ Gotowe
                     </x-nav-link>
                     <x-nav-link :href="route('contractors.index')" :active="request()->routeIs('contractors.*')">
                         Kontrahenci

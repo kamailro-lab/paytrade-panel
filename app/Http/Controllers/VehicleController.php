@@ -18,6 +18,28 @@ class VehicleController extends Controller
         if ($status = $request->query('status')) {
             $query->where('status', $status);
         }
+        if ($ready = $request->query('ready')) {
+            if ($ready === 'full') {
+                $query->where('nct_passed', true)
+                      ->where('service_done', true)
+                      ->where('timing_belt_checked', true);
+            } elseif ($ready === 'partial') {
+                $query->where(function ($q) {
+                    $q->where('nct_passed', true)
+                      ->orWhere('service_done', true)
+                      ->orWhere('timing_belt_checked', true);
+                })->where(function ($q) {
+                    $q->where('nct_passed', false)
+                      ->orWhere('service_done', false)
+                      ->orWhere('timing_belt_checked', false);
+                });
+            } elseif ($ready === 'none') {
+                $query->where('nct_passed', false)
+                      ->where('service_done', false)
+                      ->where('timing_belt_checked', false);
+            }
+        }
+
         if ($search = $request->query('q')) {
             $normalized = strtoupper(preg_replace('/[^A-Z0-9]/i', '', $search));
 

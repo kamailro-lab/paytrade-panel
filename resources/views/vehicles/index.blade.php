@@ -165,7 +165,8 @@
                                         <th class="px-3 py-2 text-left text-xs font-semibold text-gray-600 uppercase">Rejestracja</th>
                                         <th class="px-3 py-2 text-left text-xs font-semibold text-gray-600 uppercase">Auto</th>
                                         <th class="px-2 py-2 text-left text-xs font-semibold text-gray-600 uppercase">Rok</th>
-                                        <th class="px-2 py-2 text-left text-xs font-semibold text-gray-600 uppercase">Paliwo</th>
+                                        <th class="px-2 py-2 text-left text-xs font-semibold text-gray-600 uppercase">NCT</th>
+                                        <th class="px-2 py-2 text-left text-xs font-semibold text-gray-600 uppercase">Gotowość</th>
                                         <th class="px-2 py-2 text-left text-xs font-semibold text-gray-600 uppercase">Status</th>
                                         <th class="px-2 py-2 text-right text-xs font-semibold text-gray-600 uppercase">Akcje</th>
                                     </tr>
@@ -181,13 +182,31 @@
                                         $statusLabels = ['stock' => 'W stocku', 'sold' => 'Sprzedane', 'service' => 'Serwis', 'written_off' => 'Spisane'];
                                     @endphp
                                     @foreach($vehicles as $v)
+                                        @php
+                                            $nctSt = $v->nctStatus();
+                                            $nctBadge = match($nctSt) {
+                                                'valid' => '<span class="text-green-700 font-semibold">✅ '.$v->nct_expiry->format('d.m.Y').'</span>',
+                                                'expiring' => '<span class="text-yellow-700 font-semibold">⚠️ '.$v->nct_expiry->format('d.m.Y').'</span>',
+                                                'expired' => '<span class="text-red-700 font-semibold">🚨 wygasło</span>',
+                                                default => '<span class="text-gray-400">—</span>',
+                                            };
+                                            $r = $v->readinessPercent();
+                                        @endphp
                                         <tr class="hover:bg-gray-50">
                                             <td class="px-3 py-1.5 font-mono font-bold text-indigo-700">
                                                 <a href="{{ route('vehicles.show', $v) }}" class="hover:underline">{{ $v->registration }}</a>
                                             </td>
                                             <td class="px-3 py-1.5">{{ $v->make }} {{ $v->model }}</td>
                                             <td class="px-2 py-1.5 text-gray-600">{{ $v->year ?? '—' }}</td>
-                                            <td class="px-2 py-1.5 text-gray-600">{{ $v->fuel ? ucfirst($v->fuel) : '—' }}</td>
+                                            <td class="px-2 py-1.5 text-xs">{!! $nctBadge !!}</td>
+                                            <td class="px-2 py-1.5">
+                                                <div class="flex items-center gap-1.5">
+                                                    <div class="w-16 bg-gray-200 rounded-full h-2 overflow-hidden">
+                                                        <div class="{{ $v->readinessColor() }} h-full" style="width: {{ $r }}%"></div>
+                                                    </div>
+                                                    <span class="text-xs font-semibold text-gray-700">{{ $r }}%</span>
+                                                </div>
+                                            </td>
                                             <td class="px-2 py-1.5">
                                                 <span class="inline-block px-2 py-0.5 rounded-full text-xs font-semibold {{ $statusColors[$v->status] }}">
                                                     {{ $statusLabels[$v->status] }}

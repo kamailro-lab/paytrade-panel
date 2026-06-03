@@ -32,6 +32,99 @@
                 <div class="p-4 bg-red-100 border border-red-300 text-red-800 rounded">{{ session('error') }}</div>
             @endif
 
+            {{-- ⭐ NCT na samej górze - banner z kolorem statusu --}}
+            @php
+                $nctStatus = $vehicle->nctStatus();
+                $daysLeft = $vehicle->nctDaysLeft();
+                $nctBg = match($nctStatus) {
+                    'valid' => 'bg-green-100 border-green-400 text-green-900',
+                    'expiring' => 'bg-yellow-100 border-yellow-400 text-yellow-900',
+                    'expired' => 'bg-red-100 border-red-400 text-red-900',
+                    default => 'bg-gray-100 border-gray-300 text-gray-700',
+                };
+                $nctIcon = match($nctStatus) {
+                    'valid' => '✅',
+                    'expiring' => '⚠️',
+                    'expired' => '🚨',
+                    default => '❓',
+                };
+                $nctText = match($nctStatus) {
+                    'valid' => 'NCT ważne (' . abs($daysLeft) . ' dni do końca)',
+                    'expiring' => 'NCT wygasa za ' . abs($daysLeft) . ' dni!',
+                    'expired' => 'NCT WYGASŁO ' . abs($daysLeft) . ' dni temu',
+                    default => 'NCT — brak daty',
+                };
+            @endphp
+            <div class="rounded-lg border-2 p-5 {{ $nctBg }} shadow-md">
+                <div class="flex items-center justify-between flex-wrap gap-3">
+                    <div class="flex items-center gap-4">
+                        <div class="text-5xl">{{ $nctIcon }}</div>
+                        <div>
+                            <div class="text-xs font-semibold uppercase tracking-wide opacity-75">NCT — Przegląd techniczny</div>
+                            <div class="text-2xl font-bold">{{ $nctText }}</div>
+                            @if($vehicle->nct_expiry)
+                                <div class="text-sm mt-1">Ważne do: <strong>{{ $vehicle->nct_expiry->format('d.m.Y') }}</strong></div>
+                            @endif
+                        </div>
+                    </div>
+                    @if($vehicle->nct_passed)
+                        <span class="px-3 py-1 bg-green-600 text-white text-sm font-bold rounded-full">✓ Zaliczone</span>
+                    @endif
+                </div>
+            </div>
+
+            {{-- 📊 Gotowość do sprzedaży --}}
+            @php
+                $readiness = $vehicle->readinessPercent();
+            @endphp
+            <div class="bg-white shadow rounded-lg p-5">
+                <div class="flex items-center justify-between mb-3">
+                    <h3 class="text-lg font-bold text-gray-800">📊 Gotowość do sprzedaży</h3>
+                    <span class="text-2xl font-bold {{ $readiness === 100 ? 'text-green-600' : ($readiness >= 67 ? 'text-yellow-600' : 'text-red-600') }}">
+                        {{ $readiness }}%
+                    </span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-5 overflow-hidden mb-3">
+                    <div class="{{ $vehicle->readinessColor() }} h-full transition-all" style="width: {{ $readiness }}%"></div>
+                </div>
+                <div class="text-sm font-semibold text-gray-700 mb-3">{{ $vehicle->readinessLabel() }}</div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    {{-- NCT --}}
+                    <div class="p-3 rounded border-2 {{ $vehicle->isNctValid() ? 'border-green-300 bg-green-50' : 'border-gray-200 bg-gray-50' }}">
+                        <div class="flex items-center gap-2">
+                            <span class="text-xl">{{ $vehicle->isNctValid() ? '✅' : '⬜' }}</span>
+                            <strong>NCT</strong>
+                        </div>
+                        @if($vehicle->nct_expiry)
+                            <div class="text-xs text-gray-600 mt-1">do {{ $vehicle->nct_expiry->format('d.m.Y') }}</div>
+                        @endif
+                    </div>
+
+                    {{-- Serwis --}}
+                    <div class="p-3 rounded border-2 {{ $vehicle->service_done ? 'border-green-300 bg-green-50' : 'border-gray-200 bg-gray-50' }}">
+                        <div class="flex items-center gap-2">
+                            <span class="text-xl">{{ $vehicle->service_done ? '✅' : '⬜' }}</span>
+                            <strong>🔧 Serwis</strong>
+                        </div>
+                        @if($vehicle->service_date)
+                            <div class="text-xs text-gray-600 mt-1">{{ $vehicle->service_date->format('d.m.Y') }}</div>
+                        @endif
+                    </div>
+
+                    {{-- Rozrząd --}}
+                    <div class="p-3 rounded border-2 {{ $vehicle->timing_belt_checked ? 'border-green-300 bg-green-50' : 'border-gray-200 bg-gray-50' }}">
+                        <div class="flex items-center gap-2">
+                            <span class="text-xl">{{ $vehicle->timing_belt_checked ? '✅' : '⬜' }}</span>
+                            <strong>⚙️ Rozrząd</strong>
+                        </div>
+                        @if($vehicle->timing_belt_date)
+                            <div class="text-xs text-gray-600 mt-1">{{ $vehicle->timing_belt_date->format('d.m.Y') }}</div>
+                        @endif
+                    </div>
+                </div>
+            </div>
+
             {{-- Vehicle data --}}
             <div class="bg-white shadow rounded-lg p-6">
                 <h3 class="text-lg font-semibold text-gray-800 mb-4">📋 Dane auta</h3>
