@@ -28,3 +28,6 @@ Thumbs.db
 
 # Local-specific
 .DS_Store
+/composer.json.bak
+/composer.json.prod
+/public/_install.php
