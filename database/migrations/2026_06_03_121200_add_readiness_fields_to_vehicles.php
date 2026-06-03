@@ -12,17 +12,22 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('vehicles', function (Blueprint $table) {
-            //
+            $table->boolean('service_done')->default(false)->after('nct_expiry');
+            $table->date('service_date')->nullable()->after('service_done');
+            $table->boolean('timing_belt_checked')->default(false)->after('service_date');
+            $table->date('timing_belt_date')->nullable()->after('timing_belt_checked');
+            $table->boolean('nct_passed')->default(false)->after('nct_expiry');
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::table('vehicles', function (Blueprint $table) {
-            //
+            $table->dropColumn([
+                'service_done', 'service_date',
+                'timing_belt_checked', 'timing_belt_date',
+                'nct_passed',
+            ]);
         });
     }
 };
