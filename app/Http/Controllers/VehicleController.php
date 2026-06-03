@@ -85,64 +85,60 @@ class VehicleController extends Controller
             ->with('success', 'Auto usunięte.');
     }
 
-    public function enrichFromMotorCheck(MotorCheckLookup $lookup): RedirectResponse
+    public function enrichList(): \Illuminate\Http\JsonResponse
     {
-        set_time_limit(0);
-        @ini_set('max_execution_time', '0');
-
-        $candidates = Vehicle::query()
+        $vehicles = Vehicle::query()
             ->where(function ($q) {
-                $q->where('make', 'Unknown')
-                  ->orWhere('make', '')
-                  ->orWhereNull('make')
-                  ->orWhere('model', '—')
-                  ->orWhere('model', '')
-                  ->orWhereNull('model')
-                  ->orWhereNull('year')
+                $q->whereNull('year')
                   ->orWhereNull('engine_cc')
                   ->orWhereNull('fuel')
-                  ->orWhereNull('color');
+                  ->orWhereNull('color')
+                  ->orWhere('make', 'Unknown')
+                  ->orWhere('model', '—');
             })
-            ->limit(100)
-            ->get();
+            ->orderBy('id')
+            ->get(['id', 'registration', 'make', 'model']);
 
-        $stats = ['checked' => 0, 'enriched' => 0, 'not_found' => 0, 'errors' => 0];
+        return response()->json([
+            'total' => $vehicles->count(),
+            'vehicles' => $vehicles->map(fn ($v) => [
+                'id' => $v->id,
+                'registration' => $v->registration,
+                'label' => trim(($v->make ?? '') . ' ' . ($v->model ?? '')),
+            ])->values(),
+        ]);
+    }
 
-        foreach ($candidates as $vehicle) {
-            $stats['checked']++;
-            try {
-                $data = $lookup->lookup($vehicle->registration);
-                if (!$data) {
-                    $stats['not_found']++;
-                    continue;
-                }
-
-                $updates = [];
-                foreach (['make', 'model', 'year', 'engine_cc', 'fuel', 'color', 'body'] as $field) {
-                    $newValue = $data[$field] ?? null;
-                    $oldValue = $vehicle->{$field};
-                    $isOldEmpty = $oldValue === null || $oldValue === '' || $oldValue === '—' || $oldValue === 'Unknown';
-
-                    if ($newValue !== null && $newValue !== '' && $isOldEmpty) {
-                        $updates[$field] = $newValue;
-                    }
-                }
-
-                if (!empty($updates)) {
-                    $vehicle->update($updates);
-                    $stats['enriched']++;
-                }
-            } catch (\Throwable $e) {
-                $stats['errors']++;
+    public function enrichSingle(Vehicle $vehicle, MotorCheckLookup $lookup): \Illuminate\Http\JsonResponse
+    {
+        try {
+            $data = $lookup->lookup($vehicle->registration);
+            if (!$data) {
+                return response()->json(['ok' => true, 'enriched' => false, 'reason' => 'not_in_motorcheck']);
             }
-        }
 
-        return redirect()->route('vehicles.index')->with(
-            'success',
-            sprintf(
-                '🔄 MotorCheck: sprawdzono %d aut · uzupełniono %d · brak w bazie %d · błędy %d',
-                $stats['checked'], $stats['enriched'], $stats['not_found'], $stats['errors']
-            )
-        );
+            $updates = [];
+            foreach (['make', 'model', 'year', 'engine_cc', 'fuel', 'color', 'body'] as $field) {
+                $newValue = $data[$field] ?? null;
+                $oldValue = $vehicle->{$field};
+                $isOldEmpty = $oldValue === null || $oldValue === '' || $oldValue === '—' || $oldValue === 'Unknown';
+                if ($newValue !== null && $newValue !== '' && $isOldEmpty) {
+                    $updates[$field] = $newValue;
+                }
+            }
+
+            if (!empty($updates)) {
+                $vehicle->update($updates);
+            }
+
+            return response()->json([
+                'ok' => true,
+                'enriched' => !empty($updates),
+                'updated_fields' => array_keys($updates),
+                'data' => $data,
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json(['ok' => false, 'error' => $e->getMessage()], 500);
+        }
     }
 }

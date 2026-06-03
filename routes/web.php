@@ -34,7 +34,8 @@ Route::middleware(['auth'])->group(function () {
         return view('dashboard', compact('stockCount', 'soldThisMonth', 'profitThisMonth'));
     })->name('dashboard');
 
-    Route::post('vehicles/enrich-from-motorcheck', [VehicleController::class, 'enrichFromMotorCheck'])->name('vehicles.enrich');
+    Route::get('vehicles/enrich/list', [VehicleController::class, 'enrichList'])->name('vehicles.enrich.list');
+    Route::post('vehicles/{vehicle}/enrich', [VehicleController::class, 'enrichSingle'])->name('vehicles.enrich.single');
     Route::resource('vehicles', VehicleController::class);
     Route::resource('contractors', ContractorController::class);
 

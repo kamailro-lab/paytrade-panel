@@ -3,18 +3,105 @@
         <div class="flex items-center justify-between flex-wrap gap-2">
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">🚗 Auta <span class="text-sm font-normal text-gray-500">({{ $vehicles->total() }})</span></h2>
             <div class="flex gap-2 flex-wrap">
-                <form method="POST" action="{{ route('vehicles.enrich') }}" onsubmit="this.querySelector('button').disabled=true; this.querySelector('button').textContent='⏳ Pobieram z MotorCheck...'; return confirm('Sprawdzić wszystkie auta z brakującymi danymi w MotorCheck.ie? (potrwa ~2 min dla 100 aut)');">
-                    @csrf
-                    <button type="submit" class="px-4 py-2 bg-amber-500 text-white font-semibold text-sm rounded-lg hover:bg-amber-600 transition disabled:opacity-50">
-                        🔄 MotorCheck
-                    </button>
-                </form>
+                <button type="button" id="enrich-btn" class="px-4 py-2 bg-amber-500 text-white font-semibold text-sm rounded-lg hover:bg-amber-600 transition disabled:opacity-50">
+                    🔄 MotorCheck
+                </button>
                 <a href="{{ route('vehicles.create') }}" class="px-4 py-2 bg-indigo-600 text-white font-semibold text-sm rounded-lg hover:bg-indigo-700 transition">
                     ➕ Dodaj auto
                 </a>
             </div>
         </div>
     </x-slot>
+
+    {{-- Progress overlay (hidden by default) --}}
+    <div id="enrich-overlay" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-lg shadow-xl max-w-lg w-full p-6">
+            <h3 class="text-lg font-bold mb-2">🔄 Pobieram dane z MotorCheck.ie</h3>
+            <div id="enrich-current" class="text-sm text-gray-600 mb-3 truncate">Inicjalizuję...</div>
+            <div class="w-full bg-gray-200 rounded-full h-4 overflow-hidden mb-2">
+                <div id="enrich-bar" class="bg-indigo-600 h-full transition-all duration-200" style="width: 0%"></div>
+            </div>
+            <div class="flex justify-between text-sm text-gray-600">
+                <span id="enrich-counter">0 / 0</span>
+                <span id="enrich-stats">✅ 0 · ❌ 0</span>
+            </div>
+            <div id="enrich-final" class="hidden mt-4 p-3 bg-green-100 border border-green-300 rounded text-sm text-green-900"></div>
+            <button id="enrich-close" class="hidden mt-4 px-5 py-2 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700">
+                Zamknij i odśwież
+            </button>
+        </div>
+    </div>
+
+    <script>
+    (function () {
+        const btn = document.getElementById('enrich-btn');
+        const overlay = document.getElementById('enrich-overlay');
+        const current = document.getElementById('enrich-current');
+        const bar = document.getElementById('enrich-bar');
+        const counter = document.getElementById('enrich-counter');
+        const stats = document.getElementById('enrich-stats');
+        const final = document.getElementById('enrich-final');
+        const closeBtn = document.getElementById('enrich-close');
+        const csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+        btn.addEventListener('click', async () => {
+            if (!confirm('Pobrać brakujące dane z MotorCheck.ie? Można w każdej chwili zatrzymać zamykając okno.')) return;
+
+            overlay.classList.remove('hidden');
+            btn.disabled = true;
+
+            // 1. Get list
+            current.textContent = '⏳ Pobieram listę aut do uzupełnienia...';
+            const listRes = await fetch('{{ route('vehicles.enrich.list') }}', { headers: { Accept: 'application/json' } });
+            const { total, vehicles } = await listRes.json();
+
+            if (total === 0) {
+                current.textContent = '✓ Wszystkie auta mają już pełne dane.';
+                closeBtn.classList.remove('hidden');
+                return;
+            }
+
+            let enriched = 0, notFound = 0, errors = 0;
+            counter.textContent = `0 / ${total}`;
+
+            // 2. Loop one by one
+            for (let i = 0; i < vehicles.length; i++) {
+                const v = vehicles[i];
+                current.textContent = `🔍 ${v.registration} — ${v.label}`;
+
+                try {
+                    const r = await fetch(`/vehicles/${v.id}/enrich`, {
+                        method: 'POST',
+                        headers: { 'X-CSRF-TOKEN': csrf, Accept: 'application/json' },
+                    });
+                    const j = await r.json();
+                    if (j.ok && j.enriched) enriched++;
+                    else if (j.ok && !j.enriched) notFound++;
+                    else errors++;
+                } catch (e) {
+                    errors++;
+                }
+
+                const pct = Math.round(((i + 1) / total) * 100);
+                bar.style.width = pct + '%';
+                counter.textContent = `${i + 1} / ${total}`;
+                stats.textContent = `✅ ${enriched} · ⏭ ${notFound} · ⚠️ ${errors}`;
+            }
+
+            current.textContent = '✓ Skończone!';
+            final.classList.remove('hidden');
+            final.innerHTML = `<strong>Wynik:</strong><br>
+                ✅ Uzupełniono <strong>${enriched}</strong> aut<br>
+                ⏭ Brak w MotorCheck: ${notFound}<br>
+                ⚠️ Błędy: ${errors}`;
+            closeBtn.classList.remove('hidden');
+        });
+
+        closeBtn.addEventListener('click', () => {
+            window.location.reload();
+        });
+    })();
+    </script>
 
     <div class="py-4">
         <div class="max-w-full mx-auto px-3 sm:px-4 lg:px-6">
