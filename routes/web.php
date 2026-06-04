@@ -8,6 +8,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PurchaseController;
 use App\Http\Controllers\SaleController;
 use App\Http\Controllers\SettingsController;
+use App\Http\Controllers\UserController;
 use App\Http\Controllers\VehicleController;
 use App\Http\Controllers\VehicleLookupController;
 use App\Models\Sale;
@@ -52,6 +53,8 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('settings', [SettingsController::class, 'edit'])->name('settings.edit');
     Route::patch('settings', [SettingsController::class, 'update'])->name('settings.update');
+
+    Route::resource('users', UserController::class)->except(['show']);
 
     Route::get('import', [ImportController::class, 'form'])->name('import.form');
     Route::post('import', [ImportController::class, 'store'])->name('import.store');

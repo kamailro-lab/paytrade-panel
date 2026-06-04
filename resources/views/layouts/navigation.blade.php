@@ -31,6 +31,9 @@
                     <x-nav-link :href="route('import.form')" :active="request()->routeIs('import.*')">
                         Import
                     </x-nav-link>
+                    <x-nav-link :href="route('users.index')" :active="request()->routeIs('users.*')">
+                        Użytkownicy
+                    </x-nav-link>
                     <x-nav-link :href="route('settings.edit')" :active="request()->routeIs('settings.*')">
                         Ustawienia
                     </x-nav-link>
