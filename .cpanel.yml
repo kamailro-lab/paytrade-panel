@@ -8,6 +8,7 @@ deployment:
     - /bin/cp -R database $DEPLOYPATH
     - /bin/cp -R lang $DEPLOYPATH
     - /bin/cp -R public $DEPLOYPATH
+    - /bin/rm -f $DEPLOYPATH/public/_install.php $DEPLOYPATH/public/_migrate.php $DEPLOYPATH/public/phpver.php
     - /bin/cp -R resources $DEPLOYPATH
     - /bin/cp -R routes $DEPLOYPATH
     - /bin/cp artisan $DEPLOYPATH
