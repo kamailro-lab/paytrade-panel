@@ -160,8 +160,33 @@
         </div>
     </section>
 
-    {{-- ═══════════════ PRAWA KOLUMNA: DANE SERWISOWE ═══════════════ --}}
+    {{-- ═══════════════ PRAWA KOLUMNA: CENY + DANE SERWISOWE ═══════════════ --}}
     <section class="bg-white border-2 border-gray-200 rounded-lg p-5">
+        <h3 class="text-base font-bold text-gray-700 uppercase tracking-wide mb-4 pb-2 border-b-2 border-green-500">
+            💰 CENY
+        </h3>
+
+        <div class="grid grid-cols-2 gap-3 mb-6">
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-1">Cena zakupu (€)</label>
+                <input type="number" name="purchase_price" step="0.01" min="0"
+                       value="{{ old('purchase_price', $vehicle->purchase?->purchase_price) }}"
+                       placeholder="np. 11500"
+                       class="w-full px-3 py-2 text-lg border-2 border-gray-300 rounded-lg focus:border-indigo-500 focus:outline-none">
+                <p class="mt-1 text-xs text-gray-500">Nieobowiązkowe — można uzupełnić później (sekcja Zakup)</p>
+                @error('purchase_price') <p class="mt-1 text-red-600 text-xs">{{ $message }}</p> @enderror
+            </div>
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-1">Cena docelowa (€)</label>
+                <input type="number" name="target_price" step="0.01" min="0"
+                       value="{{ old('target_price', $vehicle->target_price) }}"
+                       placeholder="np. 13999"
+                       class="w-full px-3 py-2 text-lg border-2 border-gray-300 rounded-lg focus:border-indigo-500 focus:outline-none">
+                <p class="mt-1 text-xs text-gray-500">Cena za którą chcesz sprzedać (nieobowiązkowe)</p>
+                @error('target_price') <p class="mt-1 text-red-600 text-xs">{{ $message }}</p> @enderror
+            </div>
+        </div>
+
         <h3 class="text-base font-bold text-gray-700 uppercase tracking-wide mb-4 pb-2 border-b-2 border-amber-500">
             🛠 DANE SERWISOWE
         </h3>

@@ -130,10 +130,14 @@
                     {{-- 💰 P&L kompaktowo --}}
                     <div class="bg-white shadow rounded-lg p-4">
                         <h3 class="font-bold text-gray-800 mb-3">💰 Finanse</h3>
-                        <div class="grid grid-cols-3 gap-2">
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
                             <div>
                                 <div class="text-xs text-gray-500">Koszt</div>
                                 <div class="text-lg font-bold text-amber-700">€{{ number_format($vehicle->totalCost(), 0, ',', ' ') }}</div>
+                            </div>
+                            <div>
+                                <div class="text-xs text-gray-500">Cena docelowa</div>
+                                <div class="text-lg font-bold text-purple-700">{{ $vehicle->target_price ? '€'.number_format($vehicle->target_price, 0, ',', ' ') : '—' }}</div>
                             </div>
                             <div>
                                 <div class="text-xs text-gray-500">Sprzedaż</div>

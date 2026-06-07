@@ -42,6 +42,8 @@ class VehicleRequest extends FormRequest
             'service_date' => ['nullable', 'date'],
             'timing_belt_checked' => ['nullable', 'boolean'],
             'timing_belt_date' => ['nullable', 'date'],
+            'target_price' => ['nullable', 'numeric', 'min:0', 'max:999999.99'],
+            'purchase_price' => ['nullable', 'numeric', 'min:0', 'max:999999.99'],
             'notes' => ['nullable', 'string', 'max:2000'],
         ];
     }

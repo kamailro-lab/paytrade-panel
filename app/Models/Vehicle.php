@@ -14,6 +14,7 @@ class Vehicle extends Model
     protected $fillable = [
         'registration', 'logbook_no', 'make', 'model', 'year', 'engine_cc',
         'fuel', 'color', 'mileage_km', 'mileage_unit', 'body', 'doors', 'status',
+        'target_price',
         'order_source', 'done_deal', 'www_listed', 'motortrans',
         'nct_expiry', 'nct_passed',
         'service_done', 'service_date',
@@ -30,6 +31,7 @@ class Vehicle extends Model
         'engine_cc' => 'integer',
         'mileage_km' => 'integer',
         'doors' => 'integer',
+        'target_price' => 'decimal:2',
         'motortrans' => 'boolean',
         'nct_passed' => 'boolean',
         'service_done' => 'boolean',

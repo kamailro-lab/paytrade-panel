@@ -73,7 +73,24 @@ class VehicleController extends Controller
 
     public function store(VehicleRequest $request): RedirectResponse
     {
-        $vehicle = Vehicle::create($request->validated());
+        $data = $request->validated();
+        $purchasePrice = $data['purchase_price'] ?? null;
+        unset($data['purchase_price']);
+
+        $vehicle = Vehicle::create($data);
+
+        // Jeśli user podał cenę zakupu w głównym formularzu - utwórz szybki Purchase
+        // (bez dostawcy - można uzupełnić później na stronie auta)
+        if ($purchasePrice !== null && $purchasePrice > 0) {
+            $vehicle->purchase()->create([
+                'purchase_date' => now(),
+                'purchase_price' => $purchasePrice,
+                'currency' => 'EUR',
+                'vrt_paid' => 0,
+                'transport_cost' => 0,
+                'contractor_id' => null,
+            ]);
+        }
 
         return redirect()->route('vehicles.show', $vehicle)
             ->with('success', 'Auto dodane.');
@@ -93,7 +110,27 @@ class VehicleController extends Controller
 
     public function update(VehicleRequest $request, Vehicle $vehicle): RedirectResponse
     {
-        $vehicle->update($request->validated());
+        $data = $request->validated();
+        $purchasePrice = $data['purchase_price'] ?? null;
+        unset($data['purchase_price']);
+
+        $vehicle->update($data);
+
+        // Update purchase_price w powiązanym Purchase (jeśli istnieje)
+        if ($purchasePrice !== null && $purchasePrice > 0) {
+            if ($vehicle->purchase) {
+                $vehicle->purchase->update(['purchase_price' => $purchasePrice]);
+            } else {
+                $vehicle->purchase()->create([
+                    'purchase_date' => now(),
+                    'purchase_price' => $purchasePrice,
+                    'currency' => 'EUR',
+                    'vrt_paid' => 0,
+                    'transport_cost' => 0,
+                    'contractor_id' => null,
+                ]);
+            }
+        }
 
         return redirect()->route('vehicles.show', $vehicle)
             ->with('success', 'Auto zaktualizowane.');
