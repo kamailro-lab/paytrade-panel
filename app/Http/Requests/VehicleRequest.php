@@ -44,6 +44,11 @@ class VehicleRequest extends FormRequest
             'timing_belt_date' => ['nullable', 'date'],
             'target_price' => ['nullable', 'numeric', 'min:0', 'max:999999.99'],
             'purchase_price' => ['nullable', 'numeric', 'min:0', 'max:999999.99'],
+            'supplier_contractor_id' => ['nullable', 'integer', 'exists:contractors,id'],
+            'source' => ['nullable', 'in:uk_auction,uk_dealer,ie_private,ie_dealer,ie_auction,eu_import,other'],
+            'source_detail' => ['nullable', 'string', 'max:200'],
+            'paid_cash' => ['nullable', 'numeric', 'min:0', 'max:999999.99'],
+            'paid_bank' => ['nullable', 'numeric', 'min:0', 'max:999999.99'],
             'notes' => ['nullable', 'string', 'max:2000'],
         ];
     }

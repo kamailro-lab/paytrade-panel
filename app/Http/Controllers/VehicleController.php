@@ -68,32 +68,66 @@ class VehicleController extends Controller
     {
         return view('vehicles.create', [
             'vehicle' => new Vehicle(['status' => 'stock']),
+            'suppliers' => \App\Models\Contractor::whereIn('type', ['supplier', 'both'])
+                ->orderBy('name')->get(),
         ]);
     }
 
     public function store(VehicleRequest $request): RedirectResponse
     {
         $data = $request->validated();
-        $purchasePrice = $data['purchase_price'] ?? null;
-        unset($data['purchase_price']);
+
+        // Wyciągnij pola Purchase z formularza (nie zapisujemy ich na Vehicle)
+        $purchaseFields = $this->extractPurchaseFields($data);
 
         $vehicle = Vehicle::create($data);
 
-        // Jeśli user podał cenę zakupu w głównym formularzu - utwórz szybki Purchase
-        // (bez dostawcy - można uzupełnić później na stronie auta)
-        if ($purchasePrice !== null && $purchasePrice > 0) {
-            $vehicle->purchase()->create([
-                'purchase_date' => now(),
-                'purchase_price' => $purchasePrice,
-                'currency' => 'EUR',
-                'vrt_paid' => 0,
-                'transport_cost' => 0,
-                'contractor_id' => null,
-            ]);
+        // Jeśli user podał cokolwiek o zakupie (cena LUB dostawca LUB źródło LUB płatność)
+        if ($this->hasPurchaseData($purchaseFields)) {
+            $vehicle->purchase()->create($this->buildPurchasePayload($purchaseFields));
         }
 
         return redirect()->route('vehicles.show', $vehicle)
             ->with('success', 'Auto dodane.');
+    }
+
+    /**
+     * Wyciąga pola Purchase z $data i je usuwa z $data (przekazane przez referencję).
+     */
+    private function extractPurchaseFields(array &$data): array
+    {
+        $fields = [];
+        foreach (['purchase_price', 'supplier_contractor_id', 'source', 'source_detail', 'paid_cash', 'paid_bank'] as $field) {
+            $fields[$field] = $data[$field] ?? null;
+            unset($data[$field]);
+        }
+        return $fields;
+    }
+
+    private function hasPurchaseData(array $fields): bool
+    {
+        return ($fields['purchase_price'] ?? 0) > 0
+            || !empty($fields['supplier_contractor_id'])
+            || !empty($fields['source'])
+            || !empty($fields['source_detail'])
+            || ($fields['paid_cash'] ?? 0) > 0
+            || ($fields['paid_bank'] ?? 0) > 0;
+    }
+
+    private function buildPurchasePayload(array $fields): array
+    {
+        return [
+            'purchase_date' => now(),
+            'purchase_price' => $fields['purchase_price'] ?? 0,
+            'currency' => 'EUR',
+            'vrt_paid' => 0,
+            'transport_cost' => 0,
+            'contractor_id' => $fields['supplier_contractor_id'] ?: null,
+            'source' => $fields['source'] ?: null,
+            'source_detail' => $fields['source_detail'] ?: null,
+            'paid_cash' => $fields['paid_cash'] ?? 0,
+            'paid_bank' => $fields['paid_bank'] ?? 0,
+        ];
     }
 
     public function show(Vehicle $vehicle): View
@@ -105,30 +139,38 @@ class VehicleController extends Controller
 
     public function edit(Vehicle $vehicle): View
     {
-        return view('vehicles.edit', ['vehicle' => $vehicle]);
+        $vehicle->load('purchase');
+        return view('vehicles.edit', [
+            'vehicle' => $vehicle,
+            'suppliers' => \App\Models\Contractor::whereIn('type', ['supplier', 'both'])
+                ->orderBy('name')->get(),
+        ]);
     }
 
     public function update(VehicleRequest $request, Vehicle $vehicle): RedirectResponse
     {
         $data = $request->validated();
-        $purchasePrice = $data['purchase_price'] ?? null;
-        unset($data['purchase_price']);
+        $purchaseFields = $this->extractPurchaseFields($data);
 
         $vehicle->update($data);
 
-        // Update purchase_price w powiązanym Purchase (jeśli istnieje)
-        if ($purchasePrice !== null && $purchasePrice > 0) {
+        if ($this->hasPurchaseData($purchaseFields)) {
+            $payload = $this->buildPurchasePayload($purchaseFields);
+
             if ($vehicle->purchase) {
-                $vehicle->purchase->update(['purchase_price' => $purchasePrice]);
+                // Update tylko pól które user może edytować z głównego formularza
+                // (nie nadpisuj purchase_date jeśli już była ustawiona wcześniej)
+                $updateData = array_filter([
+                    'purchase_price' => $payload['purchase_price'] ?: null,
+                    'contractor_id' => $payload['contractor_id'],
+                    'source' => $payload['source'],
+                    'source_detail' => $payload['source_detail'],
+                    'paid_cash' => $payload['paid_cash'],
+                    'paid_bank' => $payload['paid_bank'],
+                ], fn($v) => $v !== null);
+                $vehicle->purchase->update($updateData);
             } else {
-                $vehicle->purchase()->create([
-                    'purchase_date' => now(),
-                    'purchase_price' => $purchasePrice,
-                    'currency' => 'EUR',
-                    'vrt_paid' => 0,
-                    'transport_cost' => 0,
-                    'contractor_id' => null,
-                ]);
+                $vehicle->purchase()->create($payload);
             }
         }
 

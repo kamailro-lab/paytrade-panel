@@ -166,9 +166,16 @@
                         <h3 class="font-bold text-gray-800 mb-3">🚚 Zakup od dostawcy</h3>
                         @if($vehicle->purchase)
                             <dl class="grid grid-cols-2 gap-2 mb-3 text-sm">
-                                <div class="col-span-2"><dt class="text-xs text-gray-500">Dostawca</dt><dd class="font-semibold">{{ $vehicle->purchase->contractor->name }}</dd></div>
+                                <div class="col-span-2"><dt class="text-xs text-gray-500">Dostawca</dt><dd class="font-semibold">{{ $vehicle->purchase->contractor?->name ?? '—' }}</dd></div>
+                                @if($vehicle->purchase->source)
+                                    <div class="col-span-2"><dt class="text-xs text-gray-500">📍 Skąd</dt><dd class="font-semibold">{{ $vehicle->purchase->sourceLabel() }}@if($vehicle->purchase->source_detail) — <span class="text-gray-600">{{ $vehicle->purchase->source_detail }}</span>@endif</dd></div>
+                                @endif
                                 <div><dt class="text-xs text-gray-500">Data</dt><dd>{{ $vehicle->purchase->purchase_date->format('d.m.Y') }}</dd></div>
                                 <div><dt class="text-xs text-gray-500">Cena</dt><dd class="font-bold">{{ $vehicle->purchase->currency }} {{ number_format($vehicle->purchase->purchase_price, 0, ',', ' ') }}</dd></div>
+                                @if($vehicle->purchase->paid_cash > 0 || $vehicle->purchase->paid_bank > 0)
+                                    <div><dt class="text-xs text-gray-500">💶 Gotówka</dt><dd class="font-semibold">€{{ number_format($vehicle->purchase->paid_cash, 0, ',', ' ') }}</dd></div>
+                                    <div><dt class="text-xs text-gray-500">🏦 Bank</dt><dd class="font-semibold">€{{ number_format($vehicle->purchase->paid_bank, 0, ',', ' ') }}</dd></div>
+                                @endif
                                 <div><dt class="text-xs text-gray-500">VRT</dt><dd>€{{ number_format($vehicle->purchase->vrt_paid, 0, ',', ' ') }}</dd></div>
                                 <div><dt class="text-xs text-gray-500">Transport</dt><dd>€{{ number_format($vehicle->purchase->transport_cost, 0, ',', ' ') }}</dd></div>
                             </dl>

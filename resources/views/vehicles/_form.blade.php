@@ -160,20 +160,21 @@
         </div>
     </section>
 
-    {{-- ═══════════════ PRAWA KOLUMNA: CENY + DANE SERWISOWE ═══════════════ --}}
+    {{-- ═══════════════ PRAWA KOLUMNA: ZAKUP + CENY + DANE SERWISOWE ═══════════════ --}}
     <section class="bg-white border-2 border-gray-200 rounded-lg p-5">
         <h3 class="text-base font-bold text-gray-700 uppercase tracking-wide mb-4 pb-2 border-b-2 border-green-500">
-            💰 CENY
+            💰 ZAKUP &amp; CENY
         </h3>
 
-        <div class="grid grid-cols-2 gap-3 mb-6">
+        {{-- Cena zakupu + docelowa --}}
+        <div class="grid grid-cols-2 gap-3 mb-4">
             <div>
                 <label class="block text-sm font-semibold text-gray-700 mb-1">Cena zakupu (€)</label>
                 <input type="number" name="purchase_price" step="0.01" min="0"
                        value="{{ old('purchase_price', $vehicle->purchase?->purchase_price) }}"
                        placeholder="np. 11500"
                        class="w-full px-3 py-2 text-lg border-2 border-gray-300 rounded-lg focus:border-indigo-500 focus:outline-none">
-                <p class="mt-1 text-xs text-gray-500">Nieobowiązkowe — można uzupełnić później (sekcja Zakup)</p>
+                <p class="mt-1 text-xs text-gray-500">Łączna cena auta</p>
                 @error('purchase_price') <p class="mt-1 text-red-600 text-xs">{{ $message }}</p> @enderror
             </div>
             <div>
@@ -182,9 +183,68 @@
                        value="{{ old('target_price', $vehicle->target_price) }}"
                        placeholder="np. 13999"
                        class="w-full px-3 py-2 text-lg border-2 border-gray-300 rounded-lg focus:border-indigo-500 focus:outline-none">
-                <p class="mt-1 text-xs text-gray-500">Cena za którą chcesz sprzedać (nieobowiązkowe)</p>
+                <p class="mt-1 text-xs text-gray-500">Za ile chcesz sprzedać</p>
                 @error('target_price') <p class="mt-1 text-red-600 text-xs">{{ $message }}</p> @enderror
             </div>
+        </div>
+
+        {{-- Skąd auto przyjechało --}}
+        <div class="mb-4">
+            <label class="block text-sm font-semibold text-gray-700 mb-1">📍 Skąd auto przyjechało</label>
+            <select name="source" class="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:border-indigo-500 focus:outline-none">
+                <option value="">— wybierz —</option>
+                @foreach(\App\Models\Purchase::sourceOptions() as $key => $label)
+                    <option value="{{ $key }}" @selected(old('source', $vehicle->purchase?->source) === $key)>{{ $label }}</option>
+                @endforeach
+            </select>
+            <input type="text" name="source_detail"
+                   value="{{ old('source_detail', $vehicle->purchase?->source_detail) }}"
+                   placeholder="Szczegóły: np. Copart Birmingham, Manheim, Pan Tomek z Cork..."
+                   class="w-full mt-2 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:border-indigo-500 focus:outline-none">
+            @error('source') <p class="mt-1 text-red-600 text-xs">{{ $message }}</p> @enderror
+        </div>
+
+        {{-- Dostawca (kontrahent) --}}
+        <div class="mb-4">
+            <label class="block text-sm font-semibold text-gray-700 mb-1">👤 Dostawca auta</label>
+            <div class="flex gap-2">
+                <select name="supplier_contractor_id" class="flex-1 px-3 py-2 border-2 border-gray-300 rounded-lg focus:border-indigo-500 focus:outline-none">
+                    <option value="">— bez konkretnego —</option>
+                    @foreach(($suppliers ?? collect()) as $supplier)
+                        <option value="{{ $supplier->id }}" @selected(old('supplier_contractor_id', $vehicle->purchase?->contractor_id) == $supplier->id)>
+                            {{ $supplier->name }}@if($supplier->phone) — {{ $supplier->phone }}@endif
+                        </option>
+                    @endforeach
+                </select>
+                <a href="{{ route('contractors.create') }}" target="_blank"
+                   class="px-3 py-2 bg-indigo-100 text-indigo-700 rounded-lg font-bold hover:bg-indigo-200 text-sm whitespace-nowrap"
+                   title="Otwiera w nowej karcie">
+                    + Nowy
+                </a>
+            </div>
+            <p class="mt-1 text-xs text-gray-500">Wybierz z listy lub dodaj nowego (nowa karta)</p>
+        </div>
+
+        {{-- Jak zapłacone (gotówka vs bank) --}}
+        <div class="mb-6 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+            <label class="block text-sm font-semibold text-gray-700 mb-2">💵 Jak zapłacone za zakup</label>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-xs text-gray-600 mb-1">💶 Gotówka (€)</label>
+                    <input type="number" name="paid_cash" step="0.01" min="0"
+                           value="{{ old('paid_cash', $vehicle->purchase?->paid_cash) }}"
+                           placeholder="0"
+                           class="payment-input w-full px-3 py-2 border-2 border-amber-300 rounded-lg focus:border-amber-500 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-600 mb-1">🏦 Przelew bank (€)</label>
+                    <input type="number" name="paid_bank" step="0.01" min="0"
+                           value="{{ old('paid_bank', $vehicle->purchase?->paid_bank) }}"
+                           placeholder="0"
+                           class="payment-input w-full px-3 py-2 border-2 border-amber-300 rounded-lg focus:border-amber-500 focus:outline-none">
+                </div>
+            </div>
+            <div id="payment-sum" class="mt-2 text-xs text-gray-700 font-semibold"></div>
         </div>
 
         <h3 class="text-base font-bold text-gray-700 uppercase tracking-wide mb-4 pb-2 border-b-2 border-amber-500">
@@ -265,6 +325,37 @@
 </div>
 
 <script>
+// Pokazuje sumę gotówka + bank vs cena zakupu, wskazując różnicę
+function updatePaymentSum() {
+    const cash = parseFloat(document.querySelector('[name="paid_cash"]')?.value) || 0;
+    const bank = parseFloat(document.querySelector('[name="paid_bank"]')?.value) || 0;
+    const price = parseFloat(document.querySelector('[name="purchase_price"]')?.value) || 0;
+    const sum = cash + bank;
+    const box = document.getElementById('payment-sum');
+    if (!box) return;
+
+    if (sum === 0 && price === 0) { box.textContent = ''; return; }
+
+    let html = `💵 Razem zapłacone: <strong>€${sum.toFixed(2)}</strong>`;
+    if (price > 0) {
+        const diff = sum - price;
+        if (Math.abs(diff) < 0.01) {
+            html += ` ✅ <span class="text-green-700">= cena zakupu</span>`;
+        } else if (diff < 0) {
+            html += ` ⚠️ <span class="text-amber-700">do zapłaty: €${Math.abs(diff).toFixed(2)}</span>`;
+        } else {
+            html += ` ℹ️ <span class="text-blue-700">+€${diff.toFixed(2)} (zapłacono więcej)</span>`;
+        }
+    }
+    box.innerHTML = html;
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('[name="paid_cash"], [name="paid_bank"], [name="purchase_price"]')
+        .forEach(el => el.addEventListener('input', updatePaymentSum));
+    updatePaymentSum();
+});
+
 (function () {
     const csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
     const $ = (s) => document.querySelector(s);
