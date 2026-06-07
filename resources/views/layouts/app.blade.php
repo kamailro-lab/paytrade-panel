@@ -38,17 +38,38 @@
             </main>
         </div>
 
-        {{-- 🎤 Voice Input — mikrofon (mniejszy, semi-transparent gdy idle) --}}
-        <div id="voice-widget" style="position:fixed;bottom:16px;right:16px;z-index:9999;font-family:system-ui,sans-serif;opacity:0.6;transition:opacity .2s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.6">
+        {{-- 🎤 Voice Input — mikrofon TYLKO na stronach z formularzami (create/edit)
+             Na listach (index) i podglądach (show) NIE pokazuje się żeby nie zasłaniał tabeli --}}
+        @php
+            $showVoiceMic = request()->routeIs(
+                'vehicles.create', 'vehicles.edit', 'vehicles.store', 'vehicles.update',
+                'vehicles.sale.edit', 'vehicles.sale.update',
+                'contractors.create', 'contractors.edit',
+                'settings.edit'
+            );
+        @endphp
+        @if($showVoiceMic)
+        <div id="voice-widget" style="position:fixed;bottom:16px;right:16px;z-index:9999;font-family:system-ui,sans-serif;opacity:0.5;transition:opacity .2s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">
             <button id="voice-btn" type="button"
                     title="Kliknij w pole tekstowe, potem ten przycisk i mów (PL/EN)"
-                    style="width:48px;height:48px;border-radius:50%;border:none;background:#4f46e5;color:white;font-size:22px;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,0.2);transition:all .2s;">
+                    style="width:44px;height:44px;border-radius:50%;border:none;background:#4f46e5;color:white;font-size:20px;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,0.2);transition:all .2s;">
                 🎤
             </button>
-            <div id="voice-status" style="display:none;position:absolute;bottom:58px;right:0;background:white;padding:8px 14px;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.15);font-size:13px;white-space:nowrap;border:2px solid #4f46e5;"></div>
-            <div id="voice-lang" style="position:absolute;bottom:0;right:54px;background:white;border:1px solid #d1d5db;border-radius:6px;font-size:11px;padding:1px 5px;cursor:pointer;user-select:none;">PL</div>
+            <button id="voice-hide" type="button" title="Ukryj mikrofon"
+                    onclick="document.getElementById('voice-widget').style.display='none';sessionStorage.setItem('voice-hidden','1')"
+                    style="position:absolute;top:-6px;right:-6px;width:18px;height:18px;border-radius:50%;border:none;background:#dc2626;color:white;font-size:11px;cursor:pointer;line-height:1;">✕</button>
+            <div id="voice-status" style="display:none;position:absolute;bottom:54px;right:0;background:white;padding:8px 14px;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.15);font-size:13px;white-space:nowrap;border:2px solid #4f46e5;"></div>
+            <div id="voice-lang" style="position:absolute;bottom:0;right:50px;background:white;border:1px solid #d1d5db;border-radius:6px;font-size:11px;padding:1px 5px;cursor:pointer;user-select:none;">PL</div>
         </div>
+        <script>
+            // Jeśli user ukrył mikrofon w tej sesji, nie pokazuj go ponownie
+            if (sessionStorage.getItem('voice-hidden') === '1') {
+                document.getElementById('voice-widget').style.display = 'none';
+            }
+        </script>
+        @endif
 
+        @if($showVoiceMic)
         <script>
         (function () {
             const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -164,5 +185,6 @@
             document.head.appendChild(style);
         })();
         </script>
+        @endif
     </body>
 </html>
