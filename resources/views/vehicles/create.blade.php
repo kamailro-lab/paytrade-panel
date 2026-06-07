@@ -4,7 +4,7 @@
     </x-slot>
 
     <div class="py-6">
-        <div class="max-w-screen-2xl mx-auto px-3 sm:px-4 lg:px-6">
+        <div class="max-w-none mx-auto px-4 sm:px-6 lg:px-8 xl:px-12">
             <form method="POST" action="{{ route('vehicles.store') }}">
                 @csrf
                 @include('vehicles._form')
