@@ -49,6 +49,13 @@ class VehicleRequest extends FormRequest
             'source_detail' => ['nullable', 'string', 'max:200'],
             'paid_cash' => ['nullable', 'numeric', 'min:0', 'max:999999.99'],
             'paid_bank' => ['nullable', 'numeric', 'min:0', 'max:999999.99'],
+            // SPRZEDAŻ (Sale)
+            'sale_price' => ['nullable', 'numeric', 'min:0', 'max:999999.99'],
+            'sale_customer_contractor_id' => ['nullable', 'integer', 'exists:contractors,id'],
+            'warranty_months' => ['nullable', 'integer', 'min:0', 'max:60'],
+            'sale_deposit' => ['nullable', 'numeric', 'min:0', 'max:999999.99'],
+            'sale_paid_cash' => ['nullable', 'numeric', 'min:0', 'max:999999.99'],
+            'sale_paid_bank' => ['nullable', 'numeric', 'min:0', 'max:999999.99'],
             'notes' => ['nullable', 'string', 'max:2000'],
         ];
     }

@@ -297,20 +297,30 @@
                         <h3 class="font-bold text-gray-800 mb-3">🤝 Sprzedaż klientowi</h3>
                         @if($vehicle->sale)
                             <dl class="grid grid-cols-2 gap-2 mb-3 text-sm">
-                                <div class="col-span-2"><dt class="text-xs text-gray-500">Klient</dt><dd class="font-semibold">{{ $vehicle->sale->contractor->name }}</dd></div>
-                                <div><dt class="text-xs text-gray-500">Data</dt><dd>{{ $vehicle->sale->sale_date->format('d.m.Y') }}</dd></div>
+                                <div class="col-span-2"><dt class="text-xs text-gray-500">Klient</dt><dd class="font-semibold">{{ $vehicle->sale->contractor?->name ?? '—' }}</dd></div>
+                                <div><dt class="text-xs text-gray-500">Data</dt><dd>{{ $vehicle->sale->sale_date?->format('d.m.Y') ?? '—' }}</dd></div>
                                 <div><dt class="text-xs text-gray-500">Cena</dt><dd class="font-bold text-lg">€{{ number_format($vehicle->sale->sale_price, 0, ',', ' ') }}</dd></div>
-                                <div><dt class="text-xs text-gray-500">Metoda</dt><dd>{{ $paymentLabels[$vehicle->sale->payment_method] }}</dd></div>
-                                @if($vehicle->sale->warranty)
-                                    <div><dt class="text-xs text-gray-500">Gwarancja</dt><dd class="text-xs">{{ $vehicle->sale->warranty }}</dd></div>
+                                @if($vehicle->sale->warranty_months > 0)
+                                    <div><dt class="text-xs text-gray-500">🛡 Gwarancja</dt><dd class="font-semibold">{{ $vehicle->sale->warrantyLabel() }}</dd></div>
+                                @elseif($vehicle->sale->warranty)
+                                    <div><dt class="text-xs text-gray-500">🛡 Gwarancja</dt><dd class="text-xs">{{ $vehicle->sale->warranty }}</dd></div>
+                                @endif
+                                @if($vehicle->sale->deposit > 0 || $vehicle->sale->paid_cash > 0 || $vehicle->sale->paid_bank > 0)
+                                    <div><dt class="text-xs text-gray-500">💰 Depozyt</dt><dd class="font-semibold">€{{ number_format($vehicle->sale->deposit, 0, ',', ' ') }}</dd></div>
+                                    <div><dt class="text-xs text-gray-500">💶 Gotówka</dt><dd class="font-semibold">€{{ number_format($vehicle->sale->paid_cash, 0, ',', ' ') }}</dd></div>
+                                    <div><dt class="text-xs text-gray-500">🏦 Bank</dt><dd class="font-semibold">€{{ number_format($vehicle->sale->paid_bank, 0, ',', ' ') }}</dd></div>
+                                    @php $saleTotalPaid = $vehicle->sale->totalPaid(); $saleDiff = $saleTotalPaid - (float)$vehicle->sale->sale_price; @endphp
+                                    <div><dt class="text-xs text-gray-500">💵 Razem</dt><dd class="font-bold @if(abs($saleDiff) < 0.01) text-green-700 @elseif($saleDiff < 0) text-amber-700 @else text-blue-700 @endif">€{{ number_format($saleTotalPaid, 0, ',', ' ') }}@if(abs($saleDiff) >= 0.01) <span class="text-xs"> ({{ $saleDiff > 0 ? '+' : '' }}€{{ number_format($saleDiff, 0, ',', ' ') }})</span>@endif</dd></div>
+                                @else
+                                    <div><dt class="text-xs text-gray-500">Metoda</dt><dd>{{ $paymentLabels[$vehicle->sale->payment_method] ?? $vehicle->sale->payment_method }}</dd></div>
                                 @endif
                                 @if($vehicle->sale->paymentTotal() > 0)
                                     <div class="col-span-2">
-                                        <dt class="text-xs text-gray-500 mb-1">Rozbicie</dt>
+                                        <dt class="text-xs text-gray-500 mb-1">Stare rozbicie (legacy)</dt>
                                         <dd class="text-xs">
                                             @if($vehicle->sale->payment_credit > 0) Kredyt: €{{ number_format($vehicle->sale->payment_credit, 0, ',', ' ') }} · @endif
                                             @if($vehicle->sale->payment_bank > 0) Bank: €{{ number_format($vehicle->sale->payment_bank, 0, ',', ' ') }} · @endif
-                                            @if($vehicle->sale->payment_cash_deposit > 0) Gotówka: €{{ number_format($vehicle->sale->payment_cash_deposit, 0, ',', ' ') }} · @endif
+                                            @if($vehicle->sale->payment_cash_deposit > 0) Gotówka/Depozyt: €{{ number_format($vehicle->sale->payment_cash_deposit, 0, ',', ' ') }} · @endif
                                             @if($vehicle->sale->payment_trade > 0) Trade: €{{ number_format($vehicle->sale->payment_trade, 0, ',', ' ') }} @endif
                                         </dd>
                                     </div>

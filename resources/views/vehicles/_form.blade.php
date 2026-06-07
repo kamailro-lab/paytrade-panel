@@ -247,6 +247,84 @@
             <div id="payment-sum" class="mt-2 text-xs text-gray-700 font-semibold"></div>
         </div>
 
+        {{-- ═══════════════ SEKCJA SPRZEDAŻY ═══════════════ --}}
+        <h3 class="text-base font-bold text-gray-700 uppercase tracking-wide mb-4 pb-2 border-b-2 border-blue-500">
+            💸 SPRZEDAŻ
+        </h3>
+
+        {{-- Cena sprzedaży + gwarancja --}}
+        <div class="grid grid-cols-2 gap-3 mb-4">
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-1">Cena sprzedaży (€)</label>
+                <input type="number" name="sale_price" step="0.01" min="0"
+                       value="{{ old('sale_price', $vehicle->sale?->sale_price) }}"
+                       placeholder="np. 13999"
+                       class="w-full px-3 py-2 text-lg border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none">
+                <p class="mt-1 text-xs text-gray-500">Cena za którą sprzedałeś</p>
+                @error('sale_price') <p class="mt-1 text-red-600 text-xs">{{ $message }}</p> @enderror
+            </div>
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-1">🛡 Gwarancja</label>
+                <select name="warranty_months" class="w-full px-3 py-2 text-lg border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none">
+                    @foreach(\App\Models\Sale::warrantyOptions() as $months => $label)
+                        <option value="{{ $months }}" @selected(old('warranty_months', $vehicle->sale?->warranty_months ?? 0) == $months)>{{ $label }}</option>
+                    @endforeach
+                </select>
+                <p class="mt-1 text-xs text-gray-500">Ile miesięcy gwarancji dla klienta</p>
+            </div>
+        </div>
+
+        {{-- Klient (kontrahent) --}}
+        <div class="mb-4">
+            <label class="block text-sm font-semibold text-gray-700 mb-1">👤 Kto kupił (klient)</label>
+            <div class="flex gap-2">
+                <select name="sale_customer_contractor_id" class="flex-1 px-3 py-2 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none">
+                    <option value="">— bez konkretnego —</option>
+                    @foreach(($customers ?? collect()) as $customer)
+                        <option value="{{ $customer->id }}" @selected(old('sale_customer_contractor_id', $vehicle->sale?->contractor_id) == $customer->id)>
+                            {{ $customer->name }}@if($customer->phone) — {{ $customer->phone }}@endif
+                        </option>
+                    @endforeach
+                </select>
+                <a href="{{ route('contractors.create') }}" target="_blank"
+                   class="px-3 py-2 bg-blue-100 text-blue-700 rounded-lg font-bold hover:bg-blue-200 text-sm whitespace-nowrap"
+                   title="Otwiera w nowej karcie">
+                    + Nowy
+                </a>
+            </div>
+            <p class="mt-1 text-xs text-gray-500">Wybierz z listy lub dodaj nowego klienta (nowa karta)</p>
+        </div>
+
+        {{-- Jak zapłacone (depozyt + gotówka + bank) --}}
+        <div class="mb-6 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+            <label class="block text-sm font-semibold text-gray-700 mb-2">💵 Jak zapłacono za sprzedaż</label>
+            <div class="grid grid-cols-3 gap-2">
+                <div>
+                    <label class="block text-xs text-gray-600 mb-1">💰 Depozyt (€)</label>
+                    <input type="number" name="sale_deposit" step="0.01" min="0"
+                           value="{{ old('sale_deposit', $vehicle->sale?->deposit) }}"
+                           placeholder="0"
+                           class="w-full px-3 py-2 border-2 border-blue-300 rounded-lg focus:border-blue-500 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-600 mb-1">💶 Gotówka (€)</label>
+                    <input type="number" name="sale_paid_cash" step="0.01" min="0"
+                           value="{{ old('sale_paid_cash', $vehicle->sale?->paid_cash) }}"
+                           placeholder="0"
+                           class="w-full px-3 py-2 border-2 border-blue-300 rounded-lg focus:border-blue-500 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-600 mb-1">🏦 Bank (€)</label>
+                    <input type="number" name="sale_paid_bank" step="0.01" min="0"
+                           value="{{ old('sale_paid_bank', $vehicle->sale?->paid_bank) }}"
+                           placeholder="0"
+                           class="w-full px-3 py-2 border-2 border-blue-300 rounded-lg focus:border-blue-500 focus:outline-none">
+                </div>
+            </div>
+            <div id="sale-sum" class="mt-2 text-xs text-gray-700 font-semibold"></div>
+            <p class="mt-1 text-xs text-gray-500 italic">Suma depozyt+gotówka+bank powinna = cena sprzedaży</p>
+        </div>
+
         <h3 class="text-base font-bold text-gray-700 uppercase tracking-wide mb-4 pb-2 border-b-2 border-amber-500">
             🛠 DANE SERWISOWE
         </h3>
@@ -325,35 +403,45 @@
 </div>
 
 <script>
-// Pokazuje sumę gotówka + bank vs cena zakupu, wskazując różnicę
-function updatePaymentSum() {
-    const cash = parseFloat(document.querySelector('[name="paid_cash"]')?.value) || 0;
-    const bank = parseFloat(document.querySelector('[name="paid_bank"]')?.value) || 0;
-    const price = parseFloat(document.querySelector('[name="purchase_price"]')?.value) || 0;
-    const sum = cash + bank;
-    const box = document.getElementById('payment-sum');
+// Walidacja sumy płatności vs cena - reużywalne dla zakup i sprzedaż
+function paymentSumHelper(boxId, priceField, payFields, ceneLabel) {
+    const sum = payFields.reduce((acc, f) => {
+        return acc + (parseFloat(document.querySelector(`[name="${f}"]`)?.value) || 0);
+    }, 0);
+    const price = parseFloat(document.querySelector(`[name="${priceField}"]`)?.value) || 0;
+    const box = document.getElementById(boxId);
     if (!box) return;
 
     if (sum === 0 && price === 0) { box.textContent = ''; return; }
 
-    let html = `💵 Razem zapłacone: <strong>€${sum.toFixed(2)}</strong>`;
+    let html = `💵 Razem: <strong>€${sum.toFixed(2)}</strong>`;
     if (price > 0) {
         const diff = sum - price;
         if (Math.abs(diff) < 0.01) {
-            html += ` ✅ <span class="text-green-700">= cena zakupu</span>`;
+            html += ` ✅ <span class="text-green-700">= ${ceneLabel}</span>`;
         } else if (diff < 0) {
             html += ` ⚠️ <span class="text-amber-700">do zapłaty: €${Math.abs(diff).toFixed(2)}</span>`;
         } else {
-            html += ` ℹ️ <span class="text-blue-700">+€${diff.toFixed(2)} (zapłacono więcej)</span>`;
+            html += ` ℹ️ <span class="text-blue-700">+€${diff.toFixed(2)} (więcej niż ${ceneLabel})</span>`;
         }
     }
     box.innerHTML = html;
 }
 
+function updatePaymentSum() {
+    paymentSumHelper('payment-sum', 'purchase_price', ['paid_cash', 'paid_bank'], 'cena zakupu');
+}
+function updateSaleSum() {
+    paymentSumHelper('sale-sum', 'sale_price', ['sale_deposit', 'sale_paid_cash', 'sale_paid_bank'], 'cena sprzedaży');
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('[name="paid_cash"], [name="paid_bank"], [name="purchase_price"]')
         .forEach(el => el.addEventListener('input', updatePaymentSum));
+    document.querySelectorAll('[name="sale_deposit"], [name="sale_paid_cash"], [name="sale_paid_bank"], [name="sale_price"]')
+        .forEach(el => el.addEventListener('input', updateSaleSum));
     updatePaymentSum();
+    updateSaleSum();
 });
 
 (function () {
