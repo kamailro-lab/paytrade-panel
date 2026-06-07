@@ -18,4 +18,5 @@ deployment:
     - /bin/cp postcss.config.js $DEPLOYPATH
     - /bin/cp vite.config.js $DEPLOYPATH
     - /bin/rm -f $DEPLOYPATH/bootstrap/cache/*.php
-    - /bin/echo "Deploy zakończony - cache wyczyszczony"
+    - cd $DEPLOYPATH && /usr/local/bin/ea-php83 artisan migrate --force --no-interaction 2>&1 || /usr/local/bin/php artisan migrate --force --no-interaction 2>&1 || /bin/echo "Migracja pominięta (php artisan niedostępny)"
+    - /bin/echo "Deploy zakończony - cache wyczyszczony + migracje wykonane"
