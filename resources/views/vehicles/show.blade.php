@@ -330,6 +330,9 @@
                                 @endif
                             </dl>
                             <div class="flex gap-2 flex-wrap">
+                                <a href="{{ route('vehicles.sale.edit', $vehicle) }}" class="px-3 py-1.5 text-sm bg-blue-600 text-white font-semibold rounded hover:bg-blue-700">
+                                    ✏️ Edytuj sprzedaż
+                                </a>
                                 <form method="POST" action="{{ route('invoices.generate', $vehicle) }}">
                                     @csrf
                                     <button type="submit" class="px-3 py-1.5 text-sm bg-indigo-600 text-white font-semibold rounded hover:bg-indigo-700">
@@ -341,15 +344,12 @@
                                         📥 {{ $vehicle->sale->invoice->invoice_number }}
                                     </a>
                                 @endif
-                                <button type="button" onclick="document.getElementById('sale-form').classList.toggle('hidden')" class="px-3 py-1.5 text-sm bg-gray-800 text-white rounded hover:bg-gray-700">✏️ Edytuj</button>
-                                <form method="POST" action="{{ route('sales.destroy', $vehicle) }}" onsubmit="return confirm('Usunąć sprzedaż? Auto wróci do stocku.')">
-                                    @csrf @method('DELETE')
-                                    <button type="submit" class="px-3 py-1.5 text-sm bg-red-100 text-red-700 rounded hover:bg-red-200">🗑</button>
-                                </form>
                             </div>
                         @else
-                            <p class="text-sm text-gray-500 mb-2">Auto jeszcze nie sprzedane.</p>
-                            <button type="button" onclick="document.getElementById('sale-form').classList.toggle('hidden')" class="px-4 py-2 bg-green-600 text-white font-semibold text-sm rounded-lg hover:bg-green-700">🟢 Sprzedaj auto</button>
+                            <p class="text-sm text-gray-500 mb-3">Auto jeszcze nie sprzedane.</p>
+                            <a href="{{ route('vehicles.sale.edit', $vehicle) }}" class="inline-block px-5 py-2.5 bg-blue-600 text-white font-bold text-base rounded-lg hover:bg-blue-700">
+                                💸 Sprzedaj to auto
+                            </a>
                         @endif
 
                         <form id="sale-form" method="POST" action="{{ route('sales.store', $vehicle) }}" class="mt-3 p-3 bg-gray-50 rounded hidden">

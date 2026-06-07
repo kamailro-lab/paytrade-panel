@@ -70,8 +70,6 @@ class VehicleController extends Controller
             'vehicle' => new Vehicle(['status' => 'stock']),
             'suppliers' => \App\Models\Contractor::whereIn('type', ['supplier', 'both'])
                 ->orderBy('name')->get(),
-            'customers' => \App\Models\Contractor::whereIn('type', ['customer', 'both'])
-                ->orderBy('name')->get(),
         ]);
     }
 
@@ -80,20 +78,11 @@ class VehicleController extends Controller
         $data = $request->validated();
 
         $purchaseFields = $this->extractPurchaseFields($data);
-        $saleFields = $this->extractSaleFields($data);
 
         $vehicle = Vehicle::create($data);
 
         if ($this->hasPurchaseData($purchaseFields)) {
             $vehicle->purchase()->create($this->buildPurchasePayload($purchaseFields));
-        }
-
-        if ($this->hasSaleData($saleFields)) {
-            $vehicle->sale()->create($this->buildSalePayload($saleFields));
-            // Auto-zmień status na 'sold' gdy dodano sprzedaż
-            if ($vehicle->status === 'stock') {
-                $vehicle->update(['status' => 'sold']);
-            }
         }
 
         return redirect()->route('vehicles.show', $vehicle)
@@ -139,43 +128,7 @@ class VehicleController extends Controller
         ];
     }
 
-    /**
-     * Wyciąga pola Sale z $data (prefiks 'sale_').
-     */
-    private function extractSaleFields(array &$data): array
-    {
-        $fields = [];
-        foreach (['sale_price', 'sale_customer_contractor_id', 'warranty_months',
-                  'sale_deposit', 'sale_paid_cash', 'sale_paid_bank'] as $field) {
-            $fields[$field] = $data[$field] ?? null;
-            unset($data[$field]);
-        }
-        return $fields;
-    }
-
-    private function hasSaleData(array $fields): bool
-    {
-        return ($fields['sale_price'] ?? 0) > 0
-            || !empty($fields['sale_customer_contractor_id'])
-            || ($fields['warranty_months'] ?? 0) > 0
-            || ($fields['sale_deposit'] ?? 0) > 0
-            || ($fields['sale_paid_cash'] ?? 0) > 0
-            || ($fields['sale_paid_bank'] ?? 0) > 0;
-    }
-
-    private function buildSalePayload(array $fields): array
-    {
-        return [
-            'sale_date' => now(),
-            'sale_price' => $fields['sale_price'] ?? 0,
-            'payment_method' => 'bank_transfer',
-            'contractor_id' => $fields['sale_customer_contractor_id'] ?: null,
-            'warranty_months' => $fields['warranty_months'] ?? 0,
-            'deposit' => $fields['sale_deposit'] ?? 0,
-            'paid_cash' => $fields['sale_paid_cash'] ?? 0,
-            'paid_bank' => $fields['sale_paid_bank'] ?? 0,
-        ];
-    }
+    // Sale logic moved to VehicleSaleController (osobna karta /vehicles/{id}/sell)
 
     public function show(Vehicle $vehicle): View
     {
@@ -191,8 +144,6 @@ class VehicleController extends Controller
             'vehicle' => $vehicle,
             'suppliers' => \App\Models\Contractor::whereIn('type', ['supplier', 'both'])
                 ->orderBy('name')->get(),
-            'customers' => \App\Models\Contractor::whereIn('type', ['customer', 'both'])
-                ->orderBy('name')->get(),
         ]);
     }
 
@@ -200,7 +151,6 @@ class VehicleController extends Controller
     {
         $data = $request->validated();
         $purchaseFields = $this->extractPurchaseFields($data);
-        $saleFields = $this->extractSaleFields($data);
 
         $vehicle->update($data);
 
@@ -219,29 +169,6 @@ class VehicleController extends Controller
                 $vehicle->purchase->update($updateData);
             } else {
                 $vehicle->purchase()->create($payload);
-            }
-        }
-
-        if ($this->hasSaleData($saleFields)) {
-            $payload = $this->buildSalePayload($saleFields);
-
-            if ($vehicle->sale) {
-                $updateData = array_filter([
-                    'sale_price' => $payload['sale_price'] ?: null,
-                    'contractor_id' => $payload['contractor_id'],
-                    'warranty_months' => $payload['warranty_months'],
-                    'deposit' => $payload['deposit'],
-                    'paid_cash' => $payload['paid_cash'],
-                    'paid_bank' => $payload['paid_bank'],
-                ], fn($v) => $v !== null);
-                $vehicle->sale->update($updateData);
-            } else {
-                $vehicle->sale()->create($payload);
-            }
-
-            // Auto-zmień status na 'sold' gdy sprzedaż dodana/zaktualizowana
-            if ($vehicle->status === 'stock') {
-                $vehicle->update(['status' => 'sold']);
             }
         }
 

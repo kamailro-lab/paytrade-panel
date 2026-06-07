@@ -11,6 +11,7 @@ use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\VehicleController;
 use App\Http\Controllers\VehicleLookupController;
+use App\Http\Controllers\VehicleSaleController;
 use App\Models\Sale;
 use App\Models\Vehicle;
 use Illuminate\Support\Facades\Route;
@@ -37,6 +38,12 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('vehicles/enrich/list', [VehicleController::class, 'enrichList'])->name('vehicles.enrich.list');
     Route::post('vehicles/{vehicle}/enrich', [VehicleController::class, 'enrichSingle'])->name('vehicles.enrich.single');
+
+    // Osobna karta sprzedaży auta (przed resource żeby nie była łapana przez {vehicle} wildcard)
+    Route::get('vehicles/{vehicle}/sell', [VehicleSaleController::class, 'edit'])->name('vehicles.sale.edit');
+    Route::put('vehicles/{vehicle}/sell', [VehicleSaleController::class, 'update'])->name('vehicles.sale.update');
+    Route::delete('vehicles/{vehicle}/sell', [VehicleSaleController::class, 'destroy'])->name('vehicles.sale.destroy');
+
     Route::resource('vehicles', VehicleController::class);
     Route::resource('contractors', ContractorController::class);
 
