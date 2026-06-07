@@ -33,20 +33,20 @@
             @endisset
 
             <!-- Page Content -->
-            <main>
+            <main class="pb-24">
                 {{ $slot }}
             </main>
         </div>
 
-        {{-- 🎤 Voice Input — globalny mikrofon (Web Speech API, darmowy) --}}
-        <div id="voice-widget" style="position:fixed;bottom:20px;right:20px;z-index:9999;font-family:system-ui,sans-serif;">
+        {{-- 🎤 Voice Input — mikrofon (mniejszy, semi-transparent gdy idle) --}}
+        <div id="voice-widget" style="position:fixed;bottom:16px;right:16px;z-index:9999;font-family:system-ui,sans-serif;opacity:0.6;transition:opacity .2s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.6">
             <button id="voice-btn" type="button"
-                    title="Kliknij i mów (PL/EN). Tekst trafi w ostatnio kliknięte pole."
-                    style="width:64px;height:64px;border-radius:50%;border:none;background:#4f46e5;color:white;font-size:28px;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,0.2);transition:all .2s;">
+                    title="Kliknij w pole tekstowe, potem ten przycisk i mów (PL/EN)"
+                    style="width:48px;height:48px;border-radius:50%;border:none;background:#4f46e5;color:white;font-size:22px;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,0.2);transition:all .2s;">
                 🎤
             </button>
-            <div id="voice-status" style="display:none;position:absolute;bottom:75px;right:0;background:white;padding:8px 14px;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.15);font-size:13px;white-space:nowrap;border:2px solid #4f46e5;"></div>
-            <div id="voice-lang" style="position:absolute;bottom:0;right:70px;background:white;border:1px solid #d1d5db;border-radius:6px;font-size:12px;padding:2px 6px;cursor:pointer;user-select:none;">PL</div>
+            <div id="voice-status" style="display:none;position:absolute;bottom:58px;right:0;background:white;padding:8px 14px;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.15);font-size:13px;white-space:nowrap;border:2px solid #4f46e5;"></div>
+            <div id="voice-lang" style="position:absolute;bottom:0;right:54px;background:white;border:1px solid #d1d5db;border-radius:6px;font-size:11px;padding:1px 5px;cursor:pointer;user-select:none;">PL</div>
         </div>
 
         <script>
@@ -57,9 +57,9 @@
             const langBtn = document.getElementById('voice-lang');
 
             if (!SR) {
-                btn.style.opacity = '0.4';
-                btn.title = 'Twoja przeglądarka nie obsługuje mikrofonu. Użyj Chrome lub Safari.';
-                btn.disabled = true;
+                // Brave / Firefox czasem blokują Web Speech API - ukryj widget
+                document.getElementById('voice-widget').style.display = 'none';
+                console.warn('Web Speech API niedostępne. W Brave: Shields → Site Settings → "Speech recognition" → Allow');
                 return;
             }
 
@@ -139,9 +139,11 @@
                     const msgs = {
                         'no-speech': 'Nie słyszę. Spróbuj jeszcze raz.',
                         'audio-capture': 'Brak dostępu do mikrofonu.',
-                        'not-allowed': 'Mikrofon zablokowany w przeglądarce. Kliknij ikonę kłódki obok adresu i odblokuj.',
-                        'network': 'Brak internetu (Web Speech wymaga sieci).',
+                        'not-allowed': 'Mikrofon zablokowany. Brave: Shields ikona obok 🔒 → off. Chrome: kłódka 🔒 → mikrofon Allow.',
+                        'network': 'Brak internetu (Web Speech wymaga połączenia z Google).',
+                        'service-not-allowed': 'Brave blokuje Web Speech. Wyłącz Shields dla tej strony LUB użyj Chrome/Safari.',
                     };
+                    console.error('Speech error:', event.error);
                     showStatus('⚠️ ' + (msgs[event.error] || event.error), '#dc2626');
                 };
 
