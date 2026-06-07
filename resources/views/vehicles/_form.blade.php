@@ -253,6 +253,27 @@
         }
     }
 
+    // Nadpisuje pole NAWET jeśli ma wartość (dla MotorCheck - znamy dane lepiej niż user)
+    function setForce(name, value) {
+        if (value === null || value === undefined || value === '') return;
+        const el = document.querySelector(`[name="${name}"]`);
+        if (!el) return;
+        if (el.tagName === 'SELECT') {
+            const opt = [...el.options].find(o => o.value === String(value));
+            if (opt) el.value = opt.value;
+        } else {
+            el.value = value;
+        }
+        // Trigger event żeby Alpine/Vue/JS reagowały
+        el.dispatchEvent(new Event('input', { bubbles: true }));
+        el.dispatchEvent(new Event('change', { bubbles: true }));
+        // Visual hint: krótkie podświetlenie
+        const originalBg = el.style.backgroundColor;
+        el.style.transition = 'background-color 0.3s';
+        el.style.backgroundColor = '#d1fae5'; // light green
+        setTimeout(() => { el.style.backgroundColor = originalBg; }, 800);
+    }
+
     let lookupBusy = false;
     regInput.addEventListener('blur', async () => {
         const raw = regInput.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
@@ -282,14 +303,15 @@
             const j = await r.json();
             if (j.ok && j.data) {
                 const d = j.data;
-                setIfEmpty('make', d.make);
-                setIfEmpty('model', d.model);
-                setIfEmpty('year', d.year);
-                setIfEmpty('engine_cc', d.engine_cc);
-                setIfEmpty('fuel', d.fuel);
-                setIfEmpty('color', d.color);
-                setIfEmpty('body', d.body);
-                decodedBox.innerHTML = '✅ <strong>' + d.make + ' ' + d.model + ', ' + d.year + '</strong> — ' + (d.engine_cc || '?') + 'ccm · ' + (d.fuel || '?') + ' · ' + (d.color || '?') + ' <span class="text-gray-500">(motorcheck.ie)</span>';
+                // NADPISUJ wszystkie pola - MotorCheck zna najlepiej (oficjalne źródło IE)
+                setForce('make', d.make);
+                setForce('model', d.model);
+                setForce('year', d.year);
+                setForce('engine_cc', d.engine_cc);
+                setForce('fuel', d.fuel);
+                setForce('color', d.color);
+                setForce('body', d.body);
+                decodedBox.innerHTML = '✅ <strong>' + d.make + ' ' + d.model + ', ' + d.year + '</strong> — ' + (d.engine_cc || '?') + 'ccm · ' + (d.fuel || '?') + ' · ' + (d.color || '?') + ' <span class="text-gray-500">(motorcheck.ie — wypełniono pola)</span>';
                 decodedBox.className = 'mt-2 p-2 bg-green-50 border border-green-300 rounded text-xs text-green-900';
             } else {
                 decodedBox.innerHTML = decodedBox.innerHTML.replace(/⏳[^<]*MotorCheck[^<]*/, '<span class="text-amber-700">⚠️ Brak w MotorCheck</span>');
@@ -336,11 +358,11 @@
         let filled = 0;
         fields.forEach(f => {
             if (data[f] !== null && data[f] !== undefined && data[f] !== '') {
-                setField(f, data[f]);
+                setForce(f, data[f]);
                 filled++;
             }
         });
-        if (data.registration) setField('registration', data.registration);
+        if (data.registration) setForce('registration', data.registration);
         showMessage(`✅ AI uzupełniło ${filled} pól.`, true);
     }
 
