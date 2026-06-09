@@ -40,4 +40,9 @@ return [
         'model' => env('ANTHROPIC_MODEL', 'claude-sonnet-4-6'),
     ],
 
+    'dealerhub' => [
+        'api_key' => env('DEALERHUB_API_KEY'),
+        'dealer_id' => env('DEALERHUB_DEALER_ID'),
+    ],
+
 ];

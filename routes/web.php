@@ -41,6 +41,10 @@ Route::middleware(['auth'])->group(function () {
     Route::put('vehicles/{vehicle}/sell', [VehicleSaleController::class, 'update'])->name('vehicles.sale.update');
     Route::delete('vehicles/{vehicle}/sell', [VehicleSaleController::class, 'destroy'])->name('vehicles.sale.destroy');
 
+    // DealerHub.ie sync (zdjęcia + uzupełnij brakujące dane)
+    Route::post('vehicles/{vehicle}/dealerhub-sync', [VehicleController::class, 'syncFromDealerHub'])
+        ->name('vehicles.dealerhub.sync');
+
     Route::resource('vehicles', VehicleController::class);
     Route::resource('contractors', ContractorController::class);
 

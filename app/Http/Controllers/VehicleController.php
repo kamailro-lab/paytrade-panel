@@ -130,6 +130,53 @@ class VehicleController extends Controller
 
     // Sale logic moved to VehicleSaleController (osobna karta /vehicles/{id}/sell)
 
+    /**
+     * Pobierz zdjęcia + brakujące dane z DealerHub.ie dla tego auta.
+     */
+    public function syncFromDealerHub(Vehicle $vehicle, \App\Services\DealerHubFeedService $feed): RedirectResponse
+    {
+        $car = $feed->findByRegistration($vehicle->registration);
+
+        if (!$car) {
+            return back()->with('error',
+                "❌ Nie znaleziono auta '{$vehicle->registration}' w DealerHub stocku. " .
+                "Upewnij się że jest tam wystawione (sprawdź też pisownię rejestracji)."
+            );
+        }
+
+        $messages = [];
+
+        // 1. Auto-uzupełnij brakujące dane z DealerHub attributes
+        $dataFromApi = $feed->extractVehicleData($car);
+        $updateData = [];
+        $filledFields = [];
+
+        foreach ($dataFromApi as $field => $value) {
+            if (!empty($value) && empty($vehicle->{$field})) {
+                $updateData[$field] = $value;
+                $filledFields[] = $field;
+            }
+        }
+
+        if (!empty($updateData)) {
+            $vehicle->update($updateData);
+            $messages[] = "Uzupełniono " . count($filledFields) . " pól: " . implode(', ', $filledFields);
+        }
+
+        // 2. Zaimportuj zdjęcia (nadpisz - DealerHub jest source of truth)
+        $photos = $feed->extractPhotos($car);
+        if (!empty($photos)) {
+            $vehicle->update(['photos' => $photos]);
+            $messages[] = "📷 Pobrano " . count($photos) . " zdjęć z DealerHub";
+        } else {
+            $messages[] = "⚠️ Brak zdjęć w DealerHub dla tego auta";
+        }
+
+        return back()->with('success',
+            "✅ Synchronizacja z DealerHub OK. " . implode(' · ', $messages)
+        );
+    }
+
     public function show(Vehicle $vehicle): View
     {
         $vehicle->load(['purchase.contractor', 'sale.contractor', 'costs']);
