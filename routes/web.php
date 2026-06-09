@@ -8,6 +8,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PurchaseController;
 use App\Http\Controllers\SaleController;
 use App\Http\Controllers\SettingsController;
+use App\Http\Controllers\StatisticsController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\VehicleController;
 use App\Http\Controllers\VehicleLookupController;
@@ -26,14 +27,10 @@ Route::middleware(['auth'])->group(function () {
         $soldThisMonth = Sale::whereMonth('sale_date', now()->month)
             ->whereYear('sale_date', now()->year)
             ->count();
-        $profitThisMonth = Sale::query()
-            ->whereMonth('sale_date', now()->month)
-            ->whereYear('sale_date', now()->year)
-            ->with('vehicle')
-            ->get()
-            ->sum(fn ($sale) => $sale->vehicle->margin() ?? 0);
 
-        return view('dashboard', compact('stockCount', 'soldThisMonth', 'profitThisMonth'));
+        // Zysk został przeniesiony do /statistics (osobne hasło menedżera).
+        // Zwykli pracownicy widzą tylko liczbę aut + sprzedanych w tym miesiącu.
+        return view('dashboard', compact('stockCount', 'soldThisMonth'));
     })->name('dashboard');
 
     Route::get('vehicles/enrich/list', [VehicleController::class, 'enrichList'])->name('vehicles.enrich.list');
@@ -60,6 +57,12 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('settings', [SettingsController::class, 'edit'])->name('settings.edit');
     Route::patch('settings', [SettingsController::class, 'update'])->name('settings.update');
+
+    // Statystyki finansowe (dostęp z osobnym hasłem menedżera)
+    Route::get('statistics/login', [StatisticsController::class, 'loginForm'])->name('statistics.login');
+    Route::post('statistics/login', [StatisticsController::class, 'login'])->name('statistics.login.post');
+    Route::get('statistics', [StatisticsController::class, 'index'])->name('statistics.index');
+    Route::post('statistics/logout', [StatisticsController::class, 'logout'])->name('statistics.logout');
 
     Route::resource('users', UserController::class)->except(['show']);
 

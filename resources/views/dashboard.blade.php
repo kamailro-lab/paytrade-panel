@@ -11,7 +11,7 @@
                 </div>
             @endif
 
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
                 <div class="bg-white shadow rounded-lg p-6">
                     <div class="text-sm text-gray-500">Aut w stocku</div>
                     <div class="mt-2 text-3xl font-bold text-indigo-700">{{ $stockCount }}</div>
@@ -20,10 +20,17 @@
                     <div class="text-sm text-gray-500">Sprzedane w tym miesiącu</div>
                     <div class="mt-2 text-3xl font-bold text-green-700">{{ $soldThisMonth }}</div>
                 </div>
-                <div class="bg-white shadow rounded-lg p-6">
-                    <div class="text-sm text-gray-500">Zysk w tym miesiącu</div>
-                    <div class="mt-2 text-3xl font-bold text-emerald-700">€{{ number_format($profitThisMonth, 2, ',', ' ') }}</div>
+            </div>
+
+            {{-- Sekcja menedżera (osobny dostęp) --}}
+            <div class="mb-6 bg-amber-50 border-2 border-amber-200 rounded-lg p-4 flex items-center justify-between">
+                <div>
+                    <h4 class="font-bold text-amber-900">🔐 Statystyki finansowe</h4>
+                    <p class="text-sm text-amber-700">Zysk, marża, VAT należny, P&amp;L per auto. Dostęp z osobnym hasłem.</p>
                 </div>
+                <a href="{{ route('statistics.login') }}" class="px-5 py-2.5 bg-amber-600 text-white font-bold rounded-lg hover:bg-amber-700 whitespace-nowrap">
+                    🔓 Otwórz
+                </a>
             </div>
 
             <div class="bg-white shadow rounded-lg p-6">
