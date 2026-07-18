@@ -16,10 +16,14 @@
 
 1. **Spójność kontekstu poprzedniego raportu (`RAPORT 10X.md`) — NIESPÓJNY.**  
    Opisywał repo jako `10x-dealership`, a audytował i pushował do `paytrade-panel`. Treść techniczna (Laravel, cPanel, `panel.mrtradex.ie`) dotyczy PayTrade, nie 10x.
-2. **Bezpieczeństwo `paytrade-panel` — 3 krytyki z poprzedniego raportu POTWIERDZONE** na `main` @ `c58e5c7`.
-3. **Spójność produktu** — branding i model sprzedaży niespójne (DealerHub vs Paytrade vs MRtardex); dane finansowe „ukryte” tylko pozornie.
+2. **`paytrade-panel` = stary, nieużywany projekt** (potwierdzone przez właściciela, 18.07.2026).  
+   Remediacja funkcjonalna / backlog feature w tym repo **nie jest priorytetem**.  
+   Jeśli `panel.mrtradex.ie` nadal jest publicznie dostępny — warto go **wyłączyć / zdjąć z DNS / zablokować**, bo 3 krytyki poniżej nadal grożą na żywym hoście.
+3. **Bezpieczeństwo kodu `paytrade-panel` — 3 krytyki POTWIERDZONE** na `main` @ `c58e5c7` (istotne tylko jeśli panel jeszcze wystawiony).
+4. **Właściwy cel dalszej pracy:** `10x-dealership` (Slim + React + PostgreSQL RLS) — **poza tym workspace**.
 
-**Ocena:** bezpieczeństwo **3/10**, spójność kontekstu poprzedniego raportu **1/10**, spójność produktu **4/10**.
+**Ocena (paytrade, legacy):** bezpieczeństwo kodu **3/10**, spójność kontekstu poprzedniego raportu **1/10**.  
+**Dla produktu aktywnego (10x):** ten raport **nie zastępuje** audytu 10x.
 
 ---
 
@@ -166,10 +170,17 @@ Aby audytować 10x: uruchomić agenta na repo `kamailro-lab/10x-dealership`, bra
 | Pytanie | Odpowiedź |
 |---------|-----------|
 | Czy poprzedni „RAPORT 10X” celował w złe repo? | **Tak** (etykieta 10x, kod PayTrade). |
-| Czy 3 krytyki są realne? | **Tak** — potwierdzone w kodzie. |
-| Czy naprawiać teraz paytrade-panel? | Tak, jeśli panel jest w użyciu produkcyjnym. |
-| Czy wracać do backlogu 10x? | Osobny agent / osobne repo — ten workspace to nie 10x. |
+| Czy 3 krytyki w PayTrade są realne? | **Tak** w kodzie — ale projekt jest **legacy / nieużywany**. |
+| Czy naprawiać paytrade-panel? | **Nie** (feature/fix), chyba że panel nadal wystawiony publicznie → wtedy **wyłączyć hosting**, nie rozwijać. |
+| Co dalej? | Audyt / backlog **`10x-dealership`**: repo `kamailro-lab/10x-dealership`, branch `main`, commit `25826ce…`, stack Slim+React+PostgreSQL RLS. |
+
+### Higiena dla starego panelu (opcjonalnie, 5 min)
+
+Jeśli `panel.mrtradex.ie` jeszcze żyje:
+1. Zdejmij vhost / ustaw maintenance / usuń DNS.
+2. Usuń z dysku `public/_migrate.php` (i `_install.php`).
+3. Wyłącz register / zablokuj HTTP — nawet na martwym produkcie otwarta rejestracja + migrate-script to zbędne ryzyko.
 
 ---
 
-*Raport wygenerowany na podstawie kodu `paytrade-panel` @ `c58e5c7` oraz metadanych Cursor Cloud poprzedniego agenta audytu. Nie obejmuje testów penetracyjnych na żywym serwerze ani odczytu produkcyjnego `.env`.*
+*Raport wygenerowany na podstawie kodu `paytrade-panel` @ `c58e5c7` oraz metadanych Cursor Cloud. Projekt uznany za legacy. Nie obejmuje audytu `10x-dealership`.*
